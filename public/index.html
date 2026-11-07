@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Penny · Voice Money Assistant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <aside class="stage-info">
+    <div class="brand-chip"><span class="mini-orb"></span> Penny</div>
+    <h1>Talk to your money.</h1>
+    <p class="lede">Penny is a voice assistant inside the banking app. Ask about your money out loud, explore "what ifs", and see the forecast change live — without touching your real balance.</p>
+    <div class="status" id="statusBox">
+      <div><span class="dot" id="dotAI"></span> <span id="stAI">Checking AI…</span></div>
+      <div><span class="dot" id="dotMic"></span> <span id="stMic">Checking voice…</span></div>
+    </div>
+    <h3>Try asking</h3>
+    <ul class="demo-prompts" id="demoPrompts"></ul>
+    <p class="fine">Demo data · scenarios are previews only · Penny is not regulated financial advice.</p>
+  </aside>
+
+  <div class="phone-wrap" id="phoneWrap">
+    <div class="phone">
+      <div class="side-btn s1"></div><div class="side-btn s2"></div><div class="side-btn s3"></div><div class="side-btn s4"></div>
+      <div class="screen" id="screen">
+        <!-- Status bar -->
+        <div class="statusbar">
+          <span class="time" id="clock">9:41</span>
+          <span class="sb-icons">
+            <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg>
+            <svg width="16" height="11" viewBox="0 0 16 11"><path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.1-1.1A10 10 0 0 0 8 .6 10 10 0 0 0 .9 3.5L2 4.6a8.4 8.4 0 0 1 6-2.4Zm0 3.2c1.4 0 2.7.5 3.7 1.4l1.1-1.1A7 7 0 0 0 8 3.8a7 7 0 0 0-4.8 1.9l1.1 1.1c1-.9 2.3-1.4 3.7-1.4Zm0 3.2c-.6 0-1.1.2-1.5.6L8 10.7l1.5-1.5c-.4-.4-.9-.6-1.5-.6Z"/></svg>
+            <span class="battery"><span></span></span>
+          </span>
+        </div>
+        <!-- Dynamic Island -->
+        <div class="island" id="island">
+          <div class="island-content">
+            <canvas id="islandOrb" width="44" height="44"></canvas>
+            <span class="island-label">Penny</span>
+            <span class="island-wave" id="islandWave"><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="island-time" id="islandTime">00:00</span>
+          </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast" id="toast"><div class="toast-icon">✓</div><div><b id="toastTitle"></b><span id="toastBody"></span></div></div>
+
+        <!-- App views -->
+        <main class="app" id="app">
+          <section class="view active" id="view-home"></section>
+          <section class="view" id="view-insights"></section>
+          <section class="view" id="view-transactions"></section>
+          <section class="view" id="view-payments"></section>
+          <section class="view" id="view-help"></section>
+          <section class="view" id="view-apply"></section>
+        </main>
+
+        <!-- Penny floating button -->
+        <button class="penny-fab" id="pennyFab" aria-label="Open Penny">
+          <canvas id="fabOrb" width="88" height="88"></canvas>
+          <span>Penny</span>
+        </button>
+
+        <!-- Penny call panel -->
+        <div class="penny-panel" id="pennyPanel" aria-hidden="true">
+          <div class="pp-grab"></div>
+          <header class="pp-head">
+            <div class="pp-title">
+              <b>Penny</b>
+              <span class="pp-state" id="ppState">Ready when you are</span>
+            </div>
+            <div class="pp-tools">
+              <span class="pp-timer" id="ppTimer"></span>
+              <button class="icon-btn" id="btnText" title="Larger text" aria-label="Larger text">Aa</button>
+              <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings">⋯</button>
+              <button class="icon-btn" id="btnMin" title="Minimise" aria-label="Minimise">
+                <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </header>
+          <div class="pp-settings" id="ppSettings">
+            <label><input type="checkbox" id="optBarge" /> Interrupt by voice <small>(use with headphones)</small></label>
+            <label><input type="checkbox" id="optVoice" checked /> Speak replies aloud</label>
+            <label class="buffer-row">Minimum buffer
+              <span class="stepper"><button data-step="-25">−</button><b id="bufVal">£100</b><button data-step="25">+</button></span>
+            </label>
+            <button class="btn primary small" id="btnAllSettings" type="button">⚙️ Language, voice & personality…</button>
+          </div>
+
+          <div class="pp-orb-wrap" id="orbWrap" title="Tap to interrupt">
+            <canvas id="orb" width="300" height="300"></canvas>
+            <div class="orb-hint" id="orbHint"></div>
+          </div>
+
+          <div class="subtitles" id="subtitles" dir="auto">
+            <p class="sub-user" id="subUser"></p>
+            <p class="sub-penny" id="subPenny">Hi 👋 I'm Penny. Tap the call button and ask me anything about your money — or upload a bill and I'll explain it.</p>
+          </div>
+
+          <div class="chips" id="chips"></div>
+
+          <details class="history" id="history">
+            <summary>Conversation <span id="histCount"></span></summary>
+            <div class="history-list" id="historyList"></div>
+          </details>
+
+          <div class="pp-controls">
+            <button class="ctl" id="btnMute" aria-label="Mute microphone">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12h-2Z" fill="currentColor"/></svg>
+              <span>Mute</span>
+            </button>
+            <button class="ctl call" id="btnCall" aria-label="Start call">
+              <svg class="i-call" width="26" height="26" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2Z"/></svg>
+            </button>
+            <button class="ctl" id="btnUpload" aria-label="Upload a bill" onclick="document.getElementById('fileInput').click()">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 7V3.5L18.5 9H13Zm-5 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+              <span>Bill</span>
+            </button>
+            <button class="ctl" id="btnKeyboard" aria-label="Type instead">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M20 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm-9 3h2v2h-2V8Zm0 3h2v2h-2v-2ZM8 8h2v2H8V8Zm0 3h2v2H8v-2ZM5 8h2v2H5V8Zm0 3h2v2H5v-2Zm11 5H8v-2h8v2Zm0-3h-2v-2h2v2Zm0-3h-2V8h2v2Zm3 3h-2v-2h2v2Zm0-3h-2V8h2v2Z"/></svg>
+              <span>Type</span>
+            </button>
+          </div>
+          <form class="pp-input" id="typeForm" autocomplete="off">
+            <button type="button" class="attach" id="btnAttach" aria-label="Upload a bill" title="Upload a photo or PDF of a bill">📎</button>
+            <input type="file" id="fileInput" accept="image/*,application/pdf" hidden />
+            <input id="typeInput" placeholder="Type a question for Penny…" />
+            <button type="submit" aria-label="Send">↑</button>
+          </form>
+        </div>
+
+        <!-- Sheets (post-call, email, tasks) -->
+        <div class="sheet-backdrop" id="sheetBackdrop"></div>
+        <div class="sheet" id="sheet"></div>
+
+        <!-- Tab bar -->
+        <nav class="tabbar" id="tabbar">
+          <button data-tab="home" class="active"><svg viewBox="0 0 24 24"><path d="M12 3 3 10v10a1 1 0 0 0 1 1h5v-6h6v6h5a1 1 0 0 0 1-1V10l-9-7Z"/></svg><span>Home</span></button>
+          <button data-tab="help"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4V4Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Help</span></button>
+          <button data-tab="payments"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Payments</span></button>
+          <button data-tab="insights"><svg viewBox="0 0 24 24"><path d="M5 20V11M10 20V6M15 20v-7M20 20V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Insights</span></button>
+          <button data-tab="apply"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7V3Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 6v15h11" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Apply</span></button>
+        </nav>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="profile.js"></script>
+  <script src="app.js"></script>
+  <script src="learn.js"></script>
+  <script src="settings.js"></script>
+  <script src="penny.js"></script>
+</body>
+</html>

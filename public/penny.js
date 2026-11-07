@@ -464,7 +464,7 @@
   async function callClaude() {
     const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: S.messages, context: context() }) });
     const j = await r.json().catch(() => ({ error: 'Bad response from server' }));
-    if (!r.ok) throw new Error(j.error || `Server error ${r.status}`);
+    if (!r.ok) { const err = new Error(j.error || `Server error ${r.status}`); err.status = r.status; throw err; }
     return j;
   }
 
@@ -487,7 +487,7 @@
     return S.chain;
   }
 
-  async function converse(text, gen, attachment) {
+  async function converse(text, gen, attachment, retried) {
     const startLen = S.messages.length;
     context();
     const content = [{ type: 'text', text: appStateNote() }];
@@ -523,9 +523,17 @@
         S.messages.push({ role: 'user', content: results });
       }
     } catch (e) {
-      console.error(e);
+      console.error('[Penny]', e.status, e.message);
       S.messages.length = startLen; // drop the unfinished turn so the conversation stays valid
-      reply = /api key|ANTHROPIC/i.test(e.message) ? e.message : "Sorry, I lost connection for a second. Could you say that again?";
+      const authProblem = e.status === 401 || /api key|ANTHROPIC|credit balance/i.test(e.message);
+      if (!retried && !authProblem) {
+        // Recover silently: start a fresh conversation with the same question (fixes most one-off API errors).
+        S.messages = []; S.frozenContext = null; S.sentKey = null;
+        await new Promise((r) => setTimeout(r, 400));
+        return converse(text, gen, attachment, true);
+      }
+      addHistory('tool', `⚠️ ${String(e.message || e).slice(0, 220)}`);
+      reply = authProblem ? e.message : "Sorry, I lost connection for a second. Could you say that again?";
     }
     reply = reply || "Done — it's on your screen.";
     addHistory('penny', reply);

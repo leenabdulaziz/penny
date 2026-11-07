@@ -273,8 +273,11 @@ function readJSON(req) {
 
 function apiError(res, err) {
   const status = err?.status || 500;
-  let message = err?.message || 'Unknown error';
-  if (status === 401 || /api key|authentication|credentials/i.test(message)) message = 'Claude API key missing or invalid. Set ANTHROPIC_API_KEY in penny-demo/.env and restart.';
+  let message = err?.error?.error?.message || err?.message || 'Unknown error';
+  if (/credit balance/i.test(message)) message = 'Your Anthropic account is out of credit. Add credit at console.anthropic.com → Billing.';
+  else if (status === 529 || /overloaded/i.test(message)) message = 'Claude is busy right now (overloaded). Try again in a moment.';
+  else if (status === 429) message = 'Too many requests to Claude (rate limit). Wait a few seconds and try again.';
+  else if (status === 401 || /api key|authentication|credentials/i.test(message)) message = 'Claude API key missing or invalid. Set ANTHROPIC_API_KEY in penny-demo/.env and restart.';
   console.error('[api]', status, message);
   res.writeHead(status >= 400 && status < 600 ? status : 500, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: message }));

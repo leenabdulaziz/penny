@@ -524,3 +524,9 @@ button { font-family: inherit; cursor: pointer; }
 
 .tr-go { width: 100%; margin-top: 14px; padding: 14px; font-size: 15.5px; }
 .tr-cancel { display: block; margin: 8px auto 0; font-weight: 600; }
+
+/* "Tap to pause" gets its own line under the orb, so it never overlaps subtitles or the status pill */
+.pp-orb-wrap { height: auto; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 2px; }
+.pp-orb-wrap canvas { width: 130px; height: 130px; }
+.orb-hint { position: static; height: 15px; line-height: 15px; font-size: 11px; }
+.subtitles { margin-top: 4px; }

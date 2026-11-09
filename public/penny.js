@@ -419,7 +419,7 @@
       }
       case 'clear_forecast_scenario': App.clearScenario(); return { ok: true };
       case 'get_transactions': return B.getTransactions(input);
-      case 'plan_savings_goal': return B.savingsPlan(input.goal_amount, input.months, input.goal_label);
+      case 'plan_savings_goal': { const plan = B.savingsPlan(input.goal_amount, input.months, input.goal_label); App.showPlan(plan); return { ...plan, shownOnScreen: true }; }
       case 'set_minimum_buffer': { const b = App.setBuffer(input.amount); return { buffer: b, forecast: B.forecastSummaryForAI(B.forecast(App.state.scenario || {})) }; }
       case 'draft_email': {
         const d = App.openEmailDraft(input, { onSent: () => {} });

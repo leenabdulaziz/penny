@@ -277,6 +277,18 @@
     s.querySelector('#billRem').onclick = () => { addReminders([{ title: `Pay ${d.issuer || 'bill'}${d.total_due ? ' — ' + d.total_due : ''}`, due: d.due_date || '' }]); toast('Reminder added', d.issuer || 'Bill', '✅', '#5a287d'); closeSheet(); };
   }
 
+  // ---------- savings plan card ----------
+  function showPlan(pl) {
+    const target = B.addDays(B.TODAY, Math.round(pl.months * 30.4));
+    const s = openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Plan: ${esc(pl.label)}</h3><div class="sub">Goal ${B.gbp0(pl.goal)} by ${B.fmtDate(target)}</div></div></div>
+      <div class="bill-key"><div><small>Each month</small><b>${B.gbp(pl.perMonth)}</b></div><div><small>Each week</small><b>${B.gbp(pl.perWeek)}</b></div></div>
+      <div class="sum-card"><b>Where it could come from</b>${pl.ideas.map((i) => `<div class="bill-item"><div class="bi-top"><span>${esc(i.idea)}</span><b class="amt" style="color:var(--green)">+${B.gbp(i.saves)}/mo</b></div><div class="muted">${esc(i.basis)}</div></div>`).join('')}
+      <div class="bill-item"><div class="bi-top"><b>Total from these ideas</b><b class="amt">${B.gbp(pl.ideasTotalPerMonth)}/mo</b></div><div class="muted">${pl.coversGoal ? '✅ Enough to hit your goal on time' : `About ${B.gbp(Math.max(0, pl.perMonth - pl.ideasTotalPerMonth))}/mo short — a longer timeline would close the gap`}</div></div></div>
+      <div class="ben-note">Free to spend above your buffer before payday: ${B.gbp(Math.max(0, pl.freeToSpendThisCycle))}. Nothing has been moved — this is a plan.</div>
+      <div class="btn-row"><button class="btn primary" id="planOk">Looks good</button></div>`);
+    s.querySelector('#planOk').onclick = closeSheet;
+  }
+
   // ---------- navigation ----------
   function show(tab) {
     state.tab = tab;
@@ -358,7 +370,7 @@
     return { sent: true, to: e.to, recipient: e.name, subject: e.subject, finalBody: e.body };
   }
 
-  window.App = { state, show, showBillBreakdown, toast, openSheet, closeSheet, setScenario, clearScenario, setBuffer, addReminders, renderReminders, openEmailDraft, sendCurrentEmail, esc };
+  window.App = { state, show, showBillBreakdown, showPlan, toast, openSheet, closeSheet, setScenario, clearScenario, setBuffer, addReminders, renderReminders, openEmailDraft, sendCurrentEmail, esc };
   show('home');
   ['profile:changed', 'learn:changed'].forEach((ev) => window.addEventListener(ev, () => { if (state.tab === 'home') renderHome(); if (state.tab === 'help') renderLearn(); }));
   // rotate the Penny insight banner

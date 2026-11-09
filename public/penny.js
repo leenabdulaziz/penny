@@ -176,8 +176,9 @@
     syncCaption();
   }
   function thinkingLine(label) {
-    $('#subPenny').innerHTML = `<span class="working">${esc(label || 'Checking your accounts…')}<i></i><i></i><i></i></span>`;
-    if (label) $('#ppState').textContent = label;
+    // A status pill (not subtitles): neutral dots while Penny thinks, a specific label only once she's actually doing something.
+    $('#subPenny').innerHTML = `<span class="working" role="status"><span class="wk-dots"><i></i><i></i><i></i></span>${label ? `<span class="wk-label">${esc(label)}</span>` : ''}</span>`;
+    $('#ppState').textContent = label || 'Thinking…';
     syncCaption();
   }
   const WORKING = {
@@ -585,7 +586,7 @@
     setUserLine(text);
     addHistory('user', text);
     setMode('thinking');
-    thinkingLine(opts.attachment ? 'Reading your bill…' : 'Checking your accounts…');
+    thinkingLine(opts.attachment ? 'Reading your bill…' : '');
     if (opts.attachment) {
       addHistory('tool', `Attached ${opts.attachment.name}`);
       if (opts.attachment.thumb) $('#subUser').insertAdjacentHTML('afterbegin', `<img class="up-thumb" src="${opts.attachment.thumb}" alt="Uploaded bill"><br>`);
@@ -622,7 +623,7 @@
         if (texts) reply = texts;
         const uses = res.content.filter((b) => b.type === 'tool_use');
         if (res.stop_reason !== 'tool_use' || !uses.length) break;
-        thinkingLine(WORKING[uses[0].name] || 'Working on it…');
+        thinkingLine(WORKING[uses[0].name] || '');
         const results = uses.map((u) => {
           S.lastTools.push(u.name);
           let out;

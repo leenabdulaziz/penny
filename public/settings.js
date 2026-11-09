@@ -4,26 +4,26 @@
   const esc = App.esc;
 
   const LANGS = [
-    { code: 'en', name: 'English', native: 'English', sr: 'en-GB', tts: 'en-GB', greet: 'Hi {name}, it\'s Penny. I\'m looking at your accounts now. What\'s on your mind money-wise?' },
-    { code: 'es', name: 'Spanish', native: 'Español', sr: 'es-ES', tts: 'es-ES', greet: 'Hola {name}, soy Penny. Estoy mirando tus cuentas. ¿En qué te puedo ayudar con tu dinero?' },
-    { code: 'ar', name: 'Arabic', native: 'العربية', sr: 'ar-SA', tts: 'ar-SA', rtl: true, greet: 'مرحباً {name}، أنا بيني. أنا أطّلع على حساباتك الآن. كيف أقدر أساعدك بخصوص فلوسك؟' },
-    { code: 'fr', name: 'French', native: 'Français', sr: 'fr-FR', tts: 'fr-FR', greet: 'Bonjour {name}, c\'est Penny. Je regarde vos comptes. Comment puis-je vous aider avec votre argent ?' },
-    { code: 'pl', name: 'Polish', native: 'Polski', sr: 'pl-PL', tts: 'pl-PL', greet: 'Cześć {name}, tu Penny. Przeglądam twoje konta. W czym mogę pomóc w sprawie pieniędzy?' },
-    { code: 'ur', name: 'Urdu', native: 'اردو', sr: 'ur-PK', tts: 'ur-PK', rtl: true, greet: 'السلام علیکم {name}، میں پینی ہوں۔ میں آپ کے اکاؤنٹس دیکھ رہی ہوں۔ پیسوں کے بارے میں کیا مدد چاہیے؟' },
-    { code: 'hi', name: 'Hindi', native: 'हिन्दी', sr: 'hi-IN', tts: 'hi-IN', greet: 'नमस्ते {name}, मैं पेनी हूँ। मैं आपके खाते देख रही हूँ। पैसों के बारे में क्या मदद चाहिए?' },
-    { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', sr: 'pa-IN', tts: 'pa-IN', greet: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ {name}, ਮੈਂ ਪੈਨੀ ਹਾਂ। ਮੈਂ ਤੁਹਾਡੇ ਖਾਤੇ ਦੇਖ ਰਹੀ ਹਾਂ। ਪੈਸਿਆਂ ਬਾਰੇ ਕੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ?' },
-    { code: 'bn', name: 'Bengali', native: 'বাংলা', sr: 'bn-IN', tts: 'bn-IN', greet: 'নমস্কার {name}, আমি পেনি। আমি আপনার অ্যাকাউন্টগুলো দেখছি। টাকা নিয়ে কী সাহায্য লাগবে?' },
-    { code: 'zh', name: 'Chinese', native: '中文', sr: 'zh-CN', tts: 'zh-CN', greet: '你好{name}，我是Penny。我正在看你的账户。关于钱，我能帮你什么？' },
-    { code: 'pt', name: 'Portuguese', native: 'Português', sr: 'pt-PT', tts: 'pt-PT', greet: 'Olá {name}, é a Penny. Estou a ver as suas contas. Em que posso ajudar com o seu dinheiro?' },
-    { code: 'ro', name: 'Romanian', native: 'Română', sr: 'ro-RO', tts: 'ro-RO', greet: 'Bună {name}, sunt Penny. Mă uit acum la conturile tale. Cu ce te pot ajuta legat de bani?' },
-    { code: 'it', name: 'Italian', native: 'Italiano', sr: 'it-IT', tts: 'it-IT', greet: 'Ciao {name}, sono Penny. Sto guardando i tuoi conti. Come posso aiutarti con i tuoi soldi?' },
-    { code: 'de', name: 'German', native: 'Deutsch', sr: 'de-DE', tts: 'de-DE', greet: 'Hallo {name}, hier ist Penny. Ich schaue mir gerade deine Konten an. Wie kann ich dir beim Thema Geld helfen?' },
-    { code: 'tr', name: 'Turkish', native: 'Türkçe', sr: 'tr-TR', tts: 'tr-TR', greet: 'Merhaba {name}, ben Penny. Hesaplarına bakıyorum. Parayla ilgili nasıl yardımcı olabilirim?' },
-    { code: 'cy', name: 'Welsh', native: 'Cymraeg', sr: 'cy-GB', tts: 'cy-GB', greet: 'Helo {name}, Penny sydd yma. Rwy\'n edrych ar eich cyfrifon. Sut alla i helpu gydag arian?' },
+    { code: 'en', name: 'English', native: 'English', sr: 'en-GB', tts: 'en-GB', greet: 'Hi {name}, how can I help?' },
+    { code: 'es', name: 'Spanish', native: 'Español', sr: 'es-ES', tts: 'es-ES', greet: 'Hola {name}, ¿en qué te ayudo?' },
+    { code: 'ar', name: 'Arabic', native: 'العربية', sr: 'ar-SA', tts: 'ar-SA', rtl: true, greet: 'أهلاً {name}، كيف أقدر أساعدك؟' },
+    { code: 'fr', name: 'French', native: 'Français', sr: 'fr-FR', tts: 'fr-FR', greet: 'Bonjour {name}, comment puis-je vous aider ?' },
+    { code: 'pl', name: 'Polish', native: 'Polski', sr: 'pl-PL', tts: 'pl-PL', greet: 'Cześć {name}, w czym mogę pomóc?' },
+    { code: 'ur', name: 'Urdu', native: 'اردو', sr: 'ur-PK', tts: 'ur-PK', rtl: true, greet: 'السلام علیکم {name}، میں کیسے مدد کر سکتی ہوں؟' },
+    { code: 'hi', name: 'Hindi', native: 'हिन्दी', sr: 'hi-IN', tts: 'hi-IN', greet: 'नमस्ते {name}, मैं कैसे मदद करूँ?' },
+    { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', sr: 'pa-IN', tts: 'pa-IN', greet: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ {name}, ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?' },
+    { code: 'bn', name: 'Bengali', native: 'বাংলা', sr: 'bn-IN', tts: 'bn-IN', greet: 'নমস্কার {name}, কীভাবে সাহায্য করতে পারি?' },
+    { code: 'zh', name: 'Chinese', native: '中文', sr: 'zh-CN', tts: 'zh-CN', greet: '你好{name}，有什么可以帮你？' },
+    { code: 'pt', name: 'Portuguese', native: 'Português', sr: 'pt-PT', tts: 'pt-PT', greet: 'Olá {name}, em que posso ajudar?' },
+    { code: 'ro', name: 'Romanian', native: 'Română', sr: 'ro-RO', tts: 'ro-RO', greet: 'Bună {name}, cu ce te pot ajuta?' },
+    { code: 'it', name: 'Italian', native: 'Italiano', sr: 'it-IT', tts: 'it-IT', greet: 'Ciao {name}, come posso aiutarti?' },
+    { code: 'de', name: 'German', native: 'Deutsch', sr: 'de-DE', tts: 'de-DE', greet: 'Hallo {name}, wie kann ich helfen?' },
+    { code: 'tr', name: 'Turkish', native: 'Türkçe', sr: 'tr-TR', tts: 'tr-TR', greet: 'Merhaba {name}, nasıl yardımcı olabilirim?' },
+    { code: 'cy', name: 'Welsh', native: 'Cymraeg', sr: 'cy-GB', tts: 'cy-GB', greet: 'Helo {name}, sut alla i helpu?' },
   ];
   const EN_GREET = {
-    teen: 'Hey {name}, Penny here. Got your accounts up. What\'s going on money-wise?',
-    older: 'Hello {name}, it\'s Penny here. I\'ve got your accounts in front of me. Take your time. What would you like help with today?',
+    teen: 'Hey {name}, what\'s up?',
+    older: 'Hello {name}, it\'s Penny. How can I help you today?',
   };
 
   const STYLES = {

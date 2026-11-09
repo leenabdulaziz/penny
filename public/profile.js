@@ -5,11 +5,11 @@
 
   const PRESETS = {
     alex: {
-      label: 'Alex, 27', emoji: '🧑‍💻', name: 'Alex', age: 27, gender: 'prefer not to say', livesWith: 'alone', relationship: 'single',
+      label: 'Leen, 27', emoji: '🧑‍💻', name: 'Leen', age: 27, gender: 'prefer not to say', livesWith: 'alone', relationship: 'single',
       children: 0, childAges: [], employment: 'employed', income: 31000, partnerIncome: 0, householdIncome: 31000, savings: 400,
       housing: 'rent', rent: 750, region: 'England', disability: false, needsCare: false, carerHours: 0, pregnant: false,
       inEducation: false, firstHome: true, uniform: false,
-      about: 'Works in design, rents a flat on their own, would like to buy a first home one day.',
+      about: 'Works in design, rents a flat on her own, would like to buy a first home one day.',
     },
     margaret: {
       label: 'Margaret, 74', emoji: '👵', name: 'Margaret', age: 74, gender: 'woman', livesWith: 'alone', relationship: 'widowed',
@@ -37,14 +37,14 @@
   let profile = { presetId: 'alex', ...PRESETS.alex };
 
   function load() {
-    try { const s = localStorage.getItem('penny.profile'); if (s) profile = { ...profile, ...JSON.parse(s) }; } catch (e) {}
+    try { const s = localStorage.getItem('penny.profile.v2'); if (s) profile = { ...profile, ...JSON.parse(s) }; } catch (e) {}
     applyName();
   }
-  function save() { try { localStorage.setItem('penny.profile', JSON.stringify(profile)); } catch (e) {} }
+  function save() { try { localStorage.setItem('penny.profile.v2', JSON.stringify(profile)); } catch (e) {} }
   function applyName() {
     B.customer.firstName = profile.name || 'there';
-    B.customer.initials = ((profile.name || '?')[0] + 'M').toUpperCase();
-    B.customer.email = `${(profile.name || 'you').toLowerCase().replace(/[^a-z]/g, '')}.morgan@example.com`;
+    B.customer.initials = (profile.name || '?')[0].toUpperCase();
+    B.customer.email = `${(profile.name || 'you').toLowerCase().replace(/[^a-z]/g, '') || 'you'}@example.com`;
   }
   function set(patch) {
     profile = { ...profile, ...patch };

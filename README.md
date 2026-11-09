@@ -38,7 +38,7 @@ Claude also gets a live JSON snapshot of the account. It includes balances, bill
 
 ## New in v2
 - **16 languages with real speech**: English, Spanish, Arabic, French, Polish, Urdu, Hindi, Punjabi, Bengali, Chinese, Portuguese, Romanian, Italian, German, Turkish and Welsh. Penny switches listening, voice and replies, either from Settings or when you start talking in another language. In the browser, she can only speak a language your computer has a voice for. On a Mac, add voices in System Settings → Accessibility → Spoken Content → System voice → Manage Voices. With ElevenLabs, every language works.
-- **Matches the user**: there are four demo people (Alex 27, Margaret 74, Jayden 17, Amira 34) and an "About you" form. Penny's tone, pace and examples adapt to each person.
+- **Matches the user**: there are four demo people (Leen 27, Margaret 74, Jayden 17, Amira 34) and an "About you" form. Penny's tone, pace and examples adapt to each person.
 - **Voices and personality**: choose a female or male voice, a specific voice, a style (warm, calm, upbeat, funny or straight-talking) and a speed. You can also type a custom personality, such as "friendly bestie" or "wise grandparent".
 - **Strictly money-only**: anything else gets a short "that's not really my business" and a steer back to money.
 - **Upload a bill** (📄 Bill button, photo or PDF): Penny reads it and shows a plain-language breakdown card in your language, then explains it out loud.

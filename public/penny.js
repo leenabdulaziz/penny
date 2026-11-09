@@ -23,6 +23,7 @@
     messages: [], turns: [], toolsUsed: [],
     callStart: 0, timerId: null,
     tts: 'browser', currentReply: '',
+    greeted: false, callTurnStart: 0, lastTools: [],
   };
 
   // ======================= ORB =======================
@@ -100,6 +101,21 @@
   }
   requestAnimationFrame(frame);
 
+  // ======================= earcons =======================
+  let toneCtx;
+  function tone(kind) {
+    try {
+      toneCtx = toneCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const notes = { start: [660, 880], end: [740, 520], done: [880] }[kind] || [800];
+      notes.forEach((f, i) => {
+        const o = toneCtx.createOscillator(), g = toneCtx.createGain(), t = toneCtx.currentTime + i * 0.09;
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.06, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+        o.connect(g); g.connect(toneCtx.destination); o.start(t); o.stop(t + 0.25);
+      });
+    } catch (e) { /* sound is optional */ }
+  }
+
   // ======================= UI helpers =======================
   const STATE_LABEL = {
     idle: 'Ready when you are', connecting: 'Connecting…', listening: 'Listening…',
@@ -129,7 +145,15 @@
     const cur = ws[Math.min(n, ws.length - 1)];
     if (cur) { const box = $('#subtitles'); const top = cur.offsetTop - box.offsetTop; if (top > box.scrollTop + box.clientHeight - 30) box.scrollTop = top - 30; }
   }
-  function thinkingLine() { $('#subPenny').innerHTML = '<span style="opacity:.7">• • •</span>'; }
+  function thinkingLine(label) {
+    $('#subPenny').innerHTML = `<span class="working">${esc(label || 'Checking your accounts…')}<i></i><i></i><i></i></span>`;
+    if (label) $('#ppState').textContent = label;
+  }
+  const WORKING = {
+    run_forecast: 'Running the numbers…', plan_savings_goal: 'Building your plan…', get_transactions: 'Looking through your transactions…',
+    draft_email: 'Writing your email…', send_email: 'Sending…', show_bill_breakdown: 'Reading your bill…', check_benefits: 'Checking what you could claim…',
+    get_lesson: 'Getting a lesson ready…', start_quiz: 'Getting a quiz ready…', add_reminders: 'Adding reminders…',
+  };
   function addHistory(role, text) {
     S.turns.push({ role, text });
     const el = document.createElement('div');
@@ -140,8 +164,18 @@
     const n = S.turns.filter((t) => t.role !== 'tool').length;
     $('#histCount').textContent = n ? `(${n})` : '';
   }
-  function renderChips() {
-    $('#chips').innerHTML = SUGGESTIONS.map((q) => `<button>${esc(q)}</button>`).join('');
+  const FOLLOW_UPS = {
+    run_forecast: ['Make me a plan to afford it', 'What if I wait until payday?', 'Clear the what-if'],
+    plan_savings_goal: ['Add this to my reminders', 'Can I do it faster?'],
+    draft_email: ['Send it', 'Make it a bit firmer', 'Not now'],
+    show_bill_breakdown: ['Remind me to pay it', 'Can I get a discount on this?'],
+    check_benefits: ['How do I claim the first one?', 'Remind me to apply'],
+    get_lesson: ['Quiz me on another topic'], start_quiz: ['Explain it more simply'],
+  };
+  function renderChips(list) {
+    const items = list && list.length ? list : SUGGESTIONS;
+    $('#chips').innerHTML = items.map((q) => `<button>${esc(q)}</button>`).join('');
+    $('#chips').scrollLeft = 0;
     $('#chips').querySelectorAll('button').forEach((b) => (b.onclick = () => ask(b.textContent)));
   }
   renderChips();
@@ -160,7 +194,7 @@
     if (S.call) { $('#island').classList.add('active'); }
     else $('#pennyFab').classList.remove('hidden');
   }
-  $('#pennyFab').onclick = openPanel;
+  $('#pennyFab').onclick = () => { openPanel(); if (!S.call) startCall(); };
   $('#btnMin').onclick = minimisePanel;
   $('#island').onclick = () => { if (S.call) openPanel(); };
   $('#btnText').onclick = () => { $('#pennyPanel').classList.toggle('big'); $('#btnText').classList.toggle('on'); };
@@ -478,7 +512,7 @@
     setUserLine(text);
     addHistory('user', text);
     setMode('thinking');
-    thinkingLine();
+    thinkingLine(opts.attachment ? 'Reading your bill…' : 'Checking your accounts…');
     if (opts.attachment) {
       addHistory('tool', `📎 ${opts.attachment.name}`);
       if (opts.attachment.thumb) $('#subUser').insertAdjacentHTML('afterbegin', `<img class="up-thumb" src="${opts.attachment.thumb}" alt="Uploaded bill"><br>`);
@@ -488,6 +522,8 @@
   }
 
   async function converse(text, gen, attachment, retried) {
+    if (!retried) S.lastTools = [];
+    if (S.messages.length > 80) { S.messages = []; S.frozenContext = null; S.sentKey = null; } // keep long sessions fast
     const startLen = S.messages.length;
     context();
     const content = [{ type: 'text', text: appStateNote() }];
@@ -513,7 +549,9 @@
         if (texts) reply = texts;
         const uses = res.content.filter((b) => b.type === 'tool_use');
         if (res.stop_reason !== 'tool_use' || !uses.length) break;
+        thinkingLine(WORKING[uses[0].name] || 'Working on it…');
         const results = uses.map((u) => {
+          S.lastTools.push(u.name);
           let out;
           try { out = runTool(u.name, u.input); } catch (e) { out = { error: String(e.message || e) }; }
           S.toolsUsed.push(u.name);
@@ -537,6 +575,8 @@
     }
     reply = reply || "Done — it's on your screen.";
     addHistory('penny', reply);
+    const fu = S.lastTools.map((t) => FOLLOW_UPS[t]).filter(Boolean).pop();
+    renderChips(fu);
     if (gen !== S.gen) return; // superseded by a newer question or the call ended
     if (!S.call && $('#optVoice').checked) {
       await speak(reply);
@@ -546,6 +586,7 @@
     if (S.call) {
       await speak(reply);
       if (gen !== S.gen || !S.call) return;
+      tone('start');
       setMode('listening');
       setUserLine('');
       startRec();
@@ -563,7 +604,9 @@
         if (file.size > 8e6) return App.toast('File too big', 'Please use a PDF under 8MB', '!', '#c4314b');
         const data = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(file); });
         block = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } };
-      } else if (file.type.startsWith('image/')) {
+      } else if (/heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)) {
+        return App.toast("Can't open iPhone HEIC photos here", 'Take a screenshot of the bill, or export it as JPG/PNG', '!', '#c4314b');
+      } else if (file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(file.name)) {
         const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
         const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
         const c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
@@ -572,8 +615,9 @@
         block = { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: thumb.split(',')[1] } };
       } else return App.toast('Unsupported file', 'Upload a photo or PDF of a bill', '!', '#c4314b');
       const l = PS().lang();
+      if (!S.open) openPanel();
       ask(l.code === 'en' ? 'Can you break down this bill for me in plain English?' : `Can you break down this bill for me? Please explain it in ${l.name}.`, { attachment: { block, name: file.name, thumb } });
-    } catch (e) { console.error(e); App.toast('Upload failed', 'Try a different file', '!', '#c4314b'); }
+    } catch (e) { console.error(e); App.toast("Couldn't read that file", 'Try a screenshot or a JPG/PNG/PDF of the bill', '!', '#c4314b'); }
   }
 
   function previewVoice(text) {
@@ -584,7 +628,7 @@
   window.addEventListener('penny:lang', () => { const l = PS().lang(); $('#subtitles').setAttribute('dir', l.rtl ? 'rtl' : 'auto'); if (S.call && S.mode === 'listening') startRec(); });
 
   // ======================= CALL LIFECYCLE =======================
-  async function startCall() {
+  async function startCall(opts = {}) {
     if (S.call) return;
     openPanel();
     S.call = true; S.muted = false;
@@ -597,12 +641,19 @@
     if (!SR) { $('#pennyPanel').classList.add('typing'); $('#btnKeyboard').classList.add('on'); }
     await startMicLevel();
     const gen = ++S.gen;
-    S.messages = []; S.frozenContext = null; S.sentKey = null; // each call starts a fresh conversation with current settings
-    const greeting = PS().greeting();
-    addHistory('penny', greeting);
+    S.callTurnStart = S.turns.length; // Penny remembers earlier calls; the summary covers just this one
     setUserLine('');
-    await speak(greeting);
+    if (opts.silent) return; // e.g. opened from an alert: the question is asked straight away
+    if (!S.greeted) {
+      S.greeted = true;
+      const greeting = PS().greeting();
+      addHistory('penny', greeting);
+      await speak(greeting);
+    } else {
+      setPennyLine("I'm listening…");
+    }
     if (gen !== S.gen || !S.call) return;
+    tone('start');
     setMode('listening');
     if (!SR) setPennyLine("Voice input isn't supported in this browser — type below and I'll answer out loud.");
     startRec();
@@ -617,8 +668,9 @@
     $('#island').classList.remove('active');
     setMode('idle');
     setUserLine('');
+    tone('end');
     setPennyLine('Call ended. Tap the green button to talk again.');
-    const hadConversation = S.turns.some((t) => t.role === 'user');
+    const hadConversation = S.turns.slice(S.callTurnStart).some((t) => t.role === 'user');
     if (hadConversation) {
       minimisePanel();
       showPostCall();
@@ -627,7 +679,7 @@
 
   // ======================= POST-CALL ACTION CARDS =======================
   async function showPostCall() {
-    const transcript = S.turns.map((t) => (t.role === 'user' ? `Customer: ${t.text}` : t.role === 'penny' ? `Penny: ${t.text}` : `[action: ${t.text}]`)).join('\n');
+    const transcript = S.turns.slice(S.callTurnStart).map((t) => (t.role === 'user' ? `Customer: ${t.text}` : t.role === 'penny' ? `Penny: ${t.text}` : `[action: ${t.text}]`)).join('\n');
     App.openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Call with Penny</h3><div class="sub">${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${$('#islandTime').textContent}</div></div></div>
       <div class="loading"><div class="spinner"></div>Penny is writing up your call…</div>`);
     let w;
@@ -636,7 +688,7 @@
       w = await r.json();
       if (!r.ok) throw new Error(w.error);
     } catch (e) {
-      const pennyLines = S.turns.filter((t) => t.role === 'penny').slice(1).map((t) => t.text);
+      const pennyLines = S.turns.slice(S.callTurnStart).filter((t) => t.role === 'penny').map((t) => t.text);
       w = {
         title: 'Your money check-in', summary: pennyLines.slice(-2).join(' ') || 'We talked through your money.',
         key_points: pennyLines.slice(0, 3), tasks: [{ title: 'Review your forecast before payday', due: B.fmtDate(B.addDays(B.nextPayday(), -3)) }, { title: 'Check subscriptions you no longer use', due: 'This week' }],
@@ -703,7 +755,7 @@
 
   window.Penny = {
     open: openPanel,
-    openAndAsk: (q) => { openPanel(); ask(q); },
+    openAndAsk: async (q) => { openPanel(); if (!S.call) await startCall({ silent: true }); ask(q); },
     ask, startCall, endCall, previewVoice, handleUpload, state: S, _renderPostCall: renderPostCall,
   };
 })();

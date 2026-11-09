@@ -23,7 +23,7 @@
   const gbp0 = (n) => (n < 0 ? '-' : '') + '£' + Math.round(Math.abs(n)).toLocaleString('en-GB');
 
   // ---------- customer + accounts ----------
-  const customer = { firstName: 'Alex', lastName: 'Morgan', email: 'alex.morgan@example.com', initials: 'AM' };
+  const customer = { firstName: 'Leen', lastName: '', email: 'leen@example.com', initials: 'L' };
 
   const accounts = {
     current: { id: 'current', name: 'Current', type: 'Current', number: '41290388', sort: '60-12-44', balance: 1250.0, overdraft: 1000 },

@@ -93,6 +93,7 @@
     S.level += (target - S.level) * 0.25;
     drawOrb($('#orb'), t, 1);
     drawOrb($('#fabOrb'), t, 1.1);
+    if (document.getElementById('liveCap').classList.contains('show')) drawOrb(document.getElementById('capOrb'), t, 1.25);
     if ($('#island').classList.contains('active')) {
       drawOrb($('#islandOrb'), t, 1.25);
       document.querySelectorAll('#islandWave i').forEach((el, i) => { el.style.height = 4 + Math.abs(Math.sin(t / 120 + i)) * S.level * 12 + 'px'; });
@@ -121,33 +122,61 @@
     idle: 'Ready when you are', connecting: 'Connecting…', listening: 'Listening…',
     thinking: 'Thinking…', speaking: 'Speaking · tap orb to interrupt',
   };
+  // ---- live captions shown at the top while the panel is tucked away during a call ----
+  function syncCaption() {
+    const cap = document.getElementById('liveCap');
+    if (!cap) return;
+    const show = S.call && !S.open;
+    cap.classList.toggle('show', show);
+    document.getElementById('screen').classList.toggle('cap-on', show); // cards shrink to sit below the captions
+    cap.classList.toggle('big-cap', $('#pennyPanel').classList.contains('big'));
+    if (!show) return;
+    $('#lcState').textContent = $('#ppState').textContent || 'Penny';
+    const box = $('#lcText');
+    if (S.mode === 'listening') {
+      const u = $('#subUser').textContent;
+      // keep Penny's last words on screen until the user starts talking
+      box.innerHTML = u ? `<span class="you">${esc(u)}</span>` : ($('#subPenny').innerHTML || '<span class="you">Listening…</span>');
+    } else {
+      box.innerHTML = $('#subPenny').innerHTML;
+      const on = box.querySelectorAll('.w.on'); const cur = on[on.length - 1];
+      box.scrollTop = cur ? Math.max(0, cur.offsetTop - box.offsetTop - 22) : 0;
+    }
+  }
+  $('#liveCap').onclick = () => openPanel();
+
   function setMode(m) {
     S.mode = m;
     $('#ppState').textContent = S.muted && S.call && m === 'listening' ? 'Mic muted · type or unmute' : STATE_LABEL[m];
     const hint = $('#orbHint');
     hint.textContent = m === 'speaking' ? 'Tap to interrupt' : '';
     hint.classList.toggle('show', m === 'speaking');
+    syncCaption();
   }
   function setUserLine(text, interim) {
     const el = $('#subUser');
     el.textContent = text ? `“${text}”` : '';
     el.classList.toggle('interim', !!interim);
+    syncCaption();
   }
   function setPennyLine(text, highlightAll = true) {
     const el = $('#subPenny');
     const words = String(text).split(/(\s+)/);
     el.innerHTML = words.map((w) => (/^\s+$/.test(w) ? w : `<span class="w${highlightAll ? ' on' : ''}">${esc(w)}</span>`)).join('');
     $('#subtitles').scrollTop = 0;
+    syncCaption();
   }
   function highlightWords(n) {
     const ws = document.querySelectorAll('#subPenny .w');
     ws.forEach((w, i) => w.classList.toggle('on', i < n));
     const cur = ws[Math.min(n, ws.length - 1)];
     if (cur) { const box = $('#subtitles'); const top = cur.offsetTop - box.offsetTop; if (top > box.scrollTop + box.clientHeight - 30) box.scrollTop = top - 30; }
+    syncCaption();
   }
   function thinkingLine(label) {
     $('#subPenny').innerHTML = `<span class="working">${esc(label || 'Checking your accounts…')}<i></i><i></i><i></i></span>`;
     if (label) $('#ppState').textContent = label;
+    syncCaption();
   }
   const WORKING = {
     run_forecast: 'Running the numbers…', plan_savings_goal: 'Building your plan…', get_transactions: 'Looking through your transactions…',
@@ -186,6 +215,7 @@
     $('#pennyPanel').setAttribute('aria-hidden', 'false');
     $('#pennyFab').classList.add('hidden');
     $('#island').classList.remove('active');
+    syncCaption();
   }
   function minimisePanel() {
     S.open = false;
@@ -193,22 +223,9 @@
     $('#pennyPanel').setAttribute('aria-hidden', 'true');
     if (S.call) { $('#island').classList.add('active'); }
     else $('#pennyFab').classList.remove('hidden');
+    syncCaption();
   }
-  const CONSENT_KEY = 'penny.consent.v1';
-  const hasConsent = () => { try { return localStorage.getItem(CONSENT_KEY) === 'yes'; } catch (e) { return true; } };
-  function withConsent(then) {
-    if (hasConsent()) return then();
-    const s = App.openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Meet Penny</h3><div class="sub">Your AI money assistant</div></div></div>
-      <div class="sum-card consent">
-        <p>🗣️ <b>Talk or type</b> — ask about your balance, spending, bills and plans.</p>
-        <p>🔒 <b>Your data stays with us.</b> Penny uses your account information to answer. Your voice is only used to understand what you say.</p>
-        <p>🧭 <b>Guidance, not advice.</b> Penny explains your options; you make the decisions. She can't move money without you.</p>
-        <p>⚠️ <b>AI can make mistakes.</b> Check anything important — and you can talk to a person any time.</p>
-      </div>
-      <div class="btn-row"><button class="btn ghost" id="cNo">Not now</button><button class="btn primary" id="cYes">Got it</button></div>`);
-    s.querySelector('#cYes').onclick = () => { try { localStorage.setItem(CONSENT_KEY, 'yes'); } catch (e) {} App.closeSheet(); setTimeout(then, 250); };
-    s.querySelector('#cNo').onclick = App.closeSheet;
-  }
+  const withConsent = (then) => then(); // no blocking pop-up; the trust note lives in the panel footer
   $('#pennyFab').onclick = () => withConsent(() => { openPanel(); if (!S.call) startCall(); });
   $('#btnMin').onclick = minimisePanel;
   $('#island').onclick = () => { if (S.call) openPanel(); };

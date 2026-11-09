@@ -37,6 +37,12 @@
           </div>
         </div>
 
+        <!-- Live captions while Penny is minimised (e.g. a card is open mid-call) -->
+        <div class="live-cap" id="liveCap" role="status" aria-live="polite">
+          <div class="lc-top"><canvas id="capOrb" width="40" height="40"></canvas><span id="lcState">Penny</span><span class="lc-open">Open ›</span></div>
+          <div class="lc-text" id="lcText"></div>
+        </div>
+
         <!-- Toast -->
         <div class="toast" id="toast"><div class="toast-icon">✓</div><div><b id="toastTitle"></b><span id="toastBody"></span></div></div>
 
@@ -123,6 +129,7 @@
             <input id="typeInput" placeholder="Type a question for Penny…" />
             <button type="submit" aria-label="Send">↑</button>
           </form>
+          <p class="pp-note">Guidance, not financial advice · AI can make mistakes · <button type="button" onclick="App.showHumanHandoff('Our team is here to help')">Talk to a person</button></p>
         </div>
 
         <!-- Sheets (post-call, email, tasks) -->

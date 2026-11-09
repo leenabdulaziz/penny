@@ -1,7 +1,7 @@
 {
   "name": "penny-demo",
   "version": "1.0.0",
-  "description": "Penny — voice AI money assistant demo (iPhone simulator)",
+  "description": "Penny \u2014 voice AI money assistant inside a banking app",
   "scripts": {
     "start": "node server.js"
   },
@@ -11,5 +11,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0"
   },
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
 }

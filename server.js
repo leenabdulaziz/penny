@@ -317,17 +317,39 @@ function apiError(res, err) {
 }
 
 // Optional password for when Penny is shared on a public link (set PENNY_PASSWORD in .env).
+// Keeping Penny private when she's online:
+//  - PENNY_ACCESS_KEY: a secret link. Opening https://your-site/?key=THE_KEY once remembers the visitor (cookie);
+//    anyone without it sees "This link is private".
+//  - PENNY_PASSWORD: alternatively, a browser password prompt.
 const PASSWORD = process.env.PENNY_PASSWORD || '';
-function authorised(req) {
-  if (!PASSWORD) return true;
+const ACCESS_KEY = process.env.PENNY_ACCESS_KEY || '';
+const COOKIE = 'penny_access';
+function hasCookie(req) {
+  return (req.headers.cookie || '').split(';').some((c) => c.trim() === `${COOKIE}=${encodeURIComponent(ACCESS_KEY)}`);
+}
+function passwordOk(req) {
   const m = /^Basic (.+)$/.exec(req.headers.authorization || '');
   if (!m) return false;
-  const pass = Buffer.from(m[1], 'base64').toString().split(':').slice(1).join(':');
-  return pass === PASSWORD;
+  return Buffer.from(m[1], 'base64').toString().split(':').slice(1).join(':') === PASSWORD;
 }
+const PRIVATE_PAGE = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Penny</title>
+<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#1b0727;color:#efe7f7;font-family:-apple-system,system-ui,sans-serif;text-align:center">
+<div><div style="width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#e2b8ff 25%,#9a4fe0 60%,#4b1d77)"></div>
+<h1 style="font-size:22px;margin:0 0 8px">This link is private</h1><p style="color:#b9a5cf;margin:0">Ask the person who shared Penny for the full link.</p></div></body>`;
 
 const server = http.createServer(async (req, res) => {
-  if (!authorised(req)) {
+  if (ACCESS_KEY) {
+    const u = new URL(req.url, 'http://x');
+    if (u.searchParams.get('key') === ACCESS_KEY) {
+      u.searchParams.delete('key');
+      res.writeHead(302, { 'Set-Cookie': `${COOKIE}=${encodeURIComponent(ACCESS_KEY)}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax${req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : ''}`, Location: u.pathname + (u.search || '') });
+      return res.end();
+    }
+    if (!hasCookie(req) && !(PASSWORD && passwordOk(req))) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(PRIVATE_PAGE);
+    }
+  } else if (PASSWORD && !passwordOk(req)) {
     res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Penny"', 'Content-Type': 'text/plain' });
     return res.end('Password required');
   }
@@ -364,6 +386,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`\n  Penny demo running → http://localhost:${PORT}`);
-  if (PASSWORD) console.log('  Password protection: on');
+  if (ACCESS_KEY) console.log(`  Private link: http://localhost:${PORT}/?key=${ACCESS_KEY}`);
+  else if (PASSWORD) console.log('  Password protection: on');
   console.log(`  Model: ${MODEL} (effort ${EFFORT})   Voice: ${ELEVEN_KEY ? 'ElevenLabs' : 'browser speech synthesis'}\n`);
 });

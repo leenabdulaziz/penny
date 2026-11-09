@@ -45,6 +45,15 @@ Claude also gets a live JSON snapshot of the account. It includes balances, bill
 - **Money skills**: 8 lessons with quizzes based on NatWest guides, with XP. Penny can also quiz you out loud.
 - **Personal banner**: shows rotating "Penny noticed" spending alerts worked out from your data.
 
+## Put Penny online (a private link you can send)
+1. Go to render.com and sign up with GitHub.
+2. Click **New → Blueprint** and choose this repository. Render reads `render.yaml`.
+3. Paste your `ANTHROPIC_API_KEY` (and `ELEVENLABS_API_KEY` if you have one) when it asks, then click **Apply**.
+4. When it's live, open the service's **Environment** tab and copy `PENNY_ACCESS_KEY`.
+5. Your private link is `https://<your-service>.onrender.com/?key=<PENNY_ACCESS_KEY>`. Anyone without the key sees "This link is private".
+
+Every `git push` redeploys automatically. The `starter` plan is always on and costs a few dollars a month (check Render's pricing). The `free` plan sleeps when idle, so the first visit can take about a minute.
+
 ## Natural voice (ElevenLabs)
 1. Sign up at elevenlabs.io, then go to **Developers → API keys → Create key**. Tick **Text to Speech** access.
 2. Add it to `.env` as `ELEVENLABS_API_KEY=...`, then restart with `npm start`.

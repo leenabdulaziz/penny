@@ -1,0 +1,16 @@
+# One-click hosting on Render (render.com → New → Blueprint → pick this repo).
+services:
+  - type: web
+    name: penny
+    runtime: node
+    plan: starter        # always on; change to "free" to try it (sleeps when idle, slow first load)
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false      # Render asks you to paste it — never committed
+      - key: PENNY_ACCESS_KEY
+        generateValue: true   # random secret for your private link
+      - key: ELEVENLABS_API_KEY
+        sync: false

@@ -21,7 +21,7 @@ const PORT = +process.env.PORT || 3000;
 const MODEL = process.env.PENNY_MODEL || 'claude-opus-5-5';
 const EFFORT = process.env.PENNY_EFFORT || 'low';
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY || '';
-const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID || 'pFZP5JQG7iQjIQuC4Bku';
+const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID || 'Xb7hH8MSUJpSbSDYk0k2'; // Alice — British, confident
 const ELEVEN_MODEL = process.env.ELEVENLABS_MODEL || 'eleven_flash_v2_5'; // fastest, multilingual
 // Server-side refusal fallback (routes a declined request to another model inside the same call).
 const SUPPORTS_FALLBACK = ['claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5', 'claude-fable-5-1'].includes(MODEL);
@@ -78,6 +78,8 @@ Actions
 - draft_email: to contact a company (e.g. negotiate a bill), draft a polite, specific email (in English unless the user asks otherwise) using real data, then say it's ready to review and ask if they'd like you to send it.
 - send_email: only after the user clearly confirms. Never send without explicit confirmation.
 - add_reminders: when the user agrees to follow-up tasks or asks to be reminded.
+- prepare_transfer: when the user wants to send money to someone or move money to their Saver. Only saved payees (see savedPayees) or their own Saver. Confirm the amount and who it's to in a few words. It opens an approval screen — the customer must approve with Face ID; you never send money yourself, so never say it's sent until the app confirms it (transfersThisSession in the live note). If the payee isn't saved, explain that for security new payees are added in Payments first. If the amount would leave them overdrawn or under their buffer, mention it briefly.
+- Transfer safety: if anything suggests pressure or a scam (someone told them to move money, a "safe account", urgency, a stranger, an investment "opportunity"), do NOT prepare the transfer. Calmly explain why, and call talk_to_a_person.
 - show_screen: when the user asks to see something. open_penny_settings: when they want to change language, voice, personality or their details.
 - set_minimum_buffer: when the user wants a different safety buffer.
 
@@ -86,7 +88,7 @@ Getting help from a person
 - If they may have been scammed or someone is pressuring them right now: tell them calmly to stop, not to share any codes or move money, and to call 159 to reach their bank safely — then call talk_to_a_person.
 
 Boundaries
-- You can't move money or change the real balance; scenarios are previews only.
+- What-if scenarios are previews only and never change the balance. Real money only moves through prepare_transfer after the customer approves it.
 - You're not a regulated financial adviser; for investment decisions, debt solutions or big decisions, suggest a specialist. If someone sounds worried about money or mentions debt they can't pay, be extra kind and mention free help like MoneyHelper, StepChange or Citizens Advice, and the bank's support team.`;
 
 const TOOLS = [
@@ -200,6 +202,19 @@ const TOOLS = [
     name: 'open_penny_settings',
     description: 'Open Penny\'s settings (language, voice, personality, About you).',
     input_schema: { type: 'object', properties: { section: { type: 'string', enum: ['about', 'voice'] } } },
+  },
+  {
+    name: 'prepare_transfer',
+    description: 'Prepare a payment to a saved payee, or a move to the customer\'s own Saver, and open the approval screen. Nothing is sent until the customer approves with Face ID.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        to: { type: 'string', description: 'Saved payee name (e.g. "Sarah Smith" or "Sarah"), or "Saver" for their own savings' },
+        amount: { type: 'number', description: 'Amount in GBP' },
+        reference: { type: 'string', description: 'Optional short payment reference' },
+      },
+      required: ['to', 'amount'],
+    },
   },
   {
     name: 'show_spending_breakdown',

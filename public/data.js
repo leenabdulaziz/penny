@@ -127,7 +127,7 @@
   tx.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   // ---------- analysis ----------
-  const isSpend = (t) => t.amount < 0 && t.cat !== 'Card repayment';
+  const isSpend = (t) => t.amount < 0 && t.cat !== 'Card repayment' && t.cat !== 'Transfers';
   function spendBetween(from, to) { // inclusive dates
     const a = iso(from), b = iso(to);
     const rows = tx.filter((t) => t.date >= a && t.date <= b && isSpend(t));
@@ -403,6 +403,7 @@
       income: { salary: SALARY.amount, payer: SALARY.payer, nextExpected: iso(nextPayday()), lastPaid: iso(lastPayday()), rule: '28th of each month, or the previous working day' },
       minimumBuffer: settings.buffer,
       baselineForecast: forecastSummaryForAI(f),
+      savedPayees: payees.map((p) => ({ name: p.name, relationship: p.note })),
       upcomingRecurring: BILLS.map((b) => ({ name: b.name, kind: b.kind, amount: b.amount, next: iso(nextBillDate(b)) })).sort((a, b) => (a.next < b.next ? -1 : 1)),
       subscriptions: subscriptions(),
       thisPayCycle: payCycleComparison(),
@@ -412,6 +413,28 @@
       financialPressures_ranked: pressures().map(({ id, title, detail, provider }) => ({ id, title, detail, provider })),
       recentTransactions: tx.slice(0, 18).map((t) => ({ date: t.date, merchant: t.merchant, amount: t.amount, category: t.cat, note: t.note })),
     };
+  }
+
+  // ---------- saved payees + transfers (real money movement, only after the customer confirms) ----------
+  const payees = [
+    { id: 'sarah', name: 'Sarah Smith', initials: 'SS', sort: '20-45-17', acct: '73920114', note: 'Sister' },
+    { id: 'amy', name: 'Amy Young', initials: 'AY', sort: '04-00-04', acct: '18834502', note: 'Friend' },
+    { id: 'jared', name: 'Jared Johnson', initials: 'JJ', sort: '60-83-71', acct: '55120987', note: 'Flatmate' },
+  ];
+  const TRANSFER_LIMIT = 1000; // per transfer via Penny
+  function findPayee(q) {
+    const t = String(q || '').toLowerCase().trim();
+    if (!t) return null;
+    if (/saver|saving/.test(t)) return { id: 'saver', name: 'Your Saver', own: true, initials: 'S', acctMask: 'Instant saver' };
+    return payees.find((p) => p.name.toLowerCase() === t) || payees.find((p) => p.name.toLowerCase().split(' ').some((w) => t.split(/\s+/).includes(w))) || payees.find((p) => p.note.toLowerCase() === t) || null;
+  }
+  function transfer(payee, amount, reference) {
+    amount = r2(+amount);
+    if (!(amount > 0)) throw new Error('Invalid amount');
+    accounts.current.balance = r2(accounts.current.balance - amount);
+    if (payee.own) accounts.saver.balance = r2(accounts.saver.balance + amount);
+    tx.unshift({ id: 't' + txId++, date: iso(TODAY), merchant: payee.own ? 'Transfer to Saver' : payee.name, amount: -amount, cat: 'Transfers', note: reference || (payee.own ? 'Saving' : 'Sent with Penny') });
+    return { ok: true, newBalance: accounts.current.balance, saverBalance: accounts.saver.balance };
   }
 
   function getTransactions({ days_back = 30, category, merchant } = {}) {
@@ -427,6 +450,6 @@
     TODAY, customer, accounts, BILLS, SALARY, settings, tx,
     iso, fmtDate, fmtShort, gbp, gbp0, addDays, diffDays,
     nextPayday, lastPayday, essentialsDaily, spendBetween, weekComparison, payCycleComparison, monthlyTotals,
-    categoryMonthlyAverages, subscriptions, spendingAlerts, spendingBreakdown, forecast, forecastSummaryForAI, savingsPlan, pressures, snapshotForAI, getTransactions, nextBillDate,
+    categoryMonthlyAverages, subscriptions, spendingAlerts, spendingBreakdown, payees, findPayee, transfer, TRANSFER_LIMIT, forecast, forecastSummaryForAI, savingsPlan, pressures, snapshotForAI, getTransactions, nextBillDate,
   };
 })();

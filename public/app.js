@@ -11,6 +11,7 @@
       { id: 1, title: 'Check council tax band', due: 'This month', done: false },
     ],
     email: null, // current draft
+    transfers: [],
     sentEmails: [],
   };
 
@@ -81,7 +82,7 @@
         <div class="card"><h6>Round Ups</h6><div class="w-ic">${Ic('piggy', 22)}</div><b style="font-size:15px">£50.00</b><div class="muted">Saved this month</div></div>
       </div>
       <div class="card"><div class="muted" style="text-align:center;margin-bottom:8px">Favourite payees</div>
-        <div class="payees"><div class="payee"><b>SS</b>Sarah Smith</div><div class="payee"><b>AY</b>Amy Young</div><div class="payee"><b>JJ</b>Jared Johnson</div></div></div>
+        <div class="payees">${B.payees.map((p) => `<button class="payee" data-pay="${p.id}"><b>${p.initials}</b>${esc(p.name)}</button>`).join('')}</div></div>
       <div class="card"><div class="muted" style="text-align:center;margin-bottom:8px">Shortcuts</div>
         <div class="shortcut"><div class="sc-ic">${Ic('swap', 18)}</div><div><b style="font-weight:600">Transfer money</b><div class="muted">From Current to Saver</div></div><span style="margin-left:auto;color:var(--purple)">›</span></div></div>
       <div style="height:40px"></div>`;
@@ -90,6 +91,7 @@
     const ls = $('#learnWidget'); if (ls) ls.onclick = () => show('help');
     const bw = $('#benefitWidget'); if (bw) bw.onclick = () => window.PennySettings && window.PennySettings.showBenefits(window.Profile.benefits());
     $('[data-open="transactions"]').onclick = () => show('transactions');
+    document.querySelectorAll('[data-pay]').forEach((b) => (b.onclick = () => window.Penny && window.Penny.openAndAsk(`I'd like to send money to ${B.payees.find((p) => p.id === b.dataset.pay).name}`)));
     renderForecast();
     renderReminders();
   }
@@ -117,7 +119,10 @@
       ${chartSVG(base, sc)}
       <div class="fc-legend"><span><i style="background:#5a287d"></i>Expected</span>${sc ? '<span><i style="background:#d6327e"></i>What if</span>' : ''}<span><i style="background:#e4d7f1;height:8px"></i>Likely range</span><span><i style="background:#c4314b"></i>Buffer ${B.gbp0(f.buffer)}</span></div>
       <div class="fc-verdict ${verdict[0]}">${verdict[1]}</div>
-      <details class="fc-assume"><summary>How we worked this out ›</summary><ul>${f.assumptions.map((x) => `<li>${esc(x)}</li>`).join('')}<li>Range shows essentials varying ±${f.essentialsUncertaintyPct}% (worst case ${B.gbp(f.worstCaseLowest)})</li></ul></details>`;
+      <details class="fc-assume" ${state.assumeOpen ? 'open' : ''}><summary>How we worked this out ›</summary><ul>${f.assumptions.filter((x) => !/buffer/i.test(x)).map((x) => `<li>${esc(x)}</li>`).join('')}<li>Range shows essentials varying ±${f.essentialsUncertaintyPct}% (worst case ${B.gbp(f.worstCaseLowest)})</li></ul>
+        <div class="buf-row"><span>Safety buffer<small>The minimum Penny tries to keep in your account</small></span><span class="stepper2"><button data-b="-25" aria-label="Lower buffer">−</button><b>${B.gbp0(f.buffer)}</b><button data-b="25" aria-label="Raise buffer">+</button></span></div></details>`;
+    el.querySelector('.fc-assume').ontoggle = (e) => (state.assumeOpen = e.target.open);
+    el.querySelectorAll('[data-b]').forEach((b) => (b.onclick = () => setBuffer(B.settings.buffer + +b.dataset.b)));
     const c = $('#fcClear');
     if (c) c.onclick = () => clearScenario();
     if (flash) {
@@ -278,6 +283,44 @@
     s.querySelector('#billRem').onclick = () => { addReminders([{ title: `Pay ${d.issuer || 'bill'}${d.total_due ? ' — ' + d.total_due : ''}`, due: d.due_date || '' }]); toast('Reminder added', d.issuer || 'Bill', 'check-square', '#5a287d'); closeSheet(); };
   }
 
+  // ---------- transfers: Penny prepares, the customer approves with Face ID ----------
+  function showTransfer(t, cb = {}) {
+    const after = B.forecast({ spends: [{ amount: t.amount, label: 'Transfer' }] });
+    const newBal = B.accounts.current.balance - t.amount;
+    const warn = newBal < 0 ? `This would take you ${B.gbp(Math.abs(newBal))} into your overdraft.`
+      : after.belowBuffer ? `You'd have about ${B.gbp0(after.lowestBeforePayday)} before payday — under your ${B.gbp0(after.buffer)} buffer.` : '';
+    const s = openSheet(`<div class="tr-head"><h3>${t.payee.own ? 'Move money' : 'Send money'}</h3><div class="sub">Prepared by Penny · check before you approve</div></div>
+      <div class="tr-amount">${B.gbp(t.amount)}</div>
+      <div class="set-group">
+        <div class="set-row"><span class="muted">From</span><span>Current ••0388 · ${B.gbp(B.accounts.current.balance)}</span></div>
+        <div class="set-row"><span class="muted">To</span><span class="tr-to"><b class="tr-av">${t.payee.initials}</b>${esc(t.payee.name)}${t.payee.own ? '' : `<small>${t.payee.sort} · ••${t.payee.acct.slice(-4)}</small>`}</span></div>
+        <div class="set-row"><span class="muted">Reference</span><span>${esc(t.reference || (t.payee.own ? 'Saving' : 'From ' + B.customer.firstName))}</span></div>
+        <div class="set-row"><span class="muted">When</span><span>Now · usually instant</span></div>
+        <div class="set-row"><span class="muted">Balance after</span><span ${newBal < 0 ? 'style="color:var(--red)"' : ''}>${B.gbp(newBal)}</span></div>
+      </div>
+      ${warn ? `<div class="warn-note"><div class="wn-row">${Ic('alert', 15)}<span>${warn}</span></div></div>` : ''}
+      ${t.payee.own ? '' : `<div class="tr-safe">${Ic('shield', 15)}<span>Penny and NatWest will never ask you to move money to a "safe account". If someone is pressuring you, stop and call 159.</span></div>`}
+      <button class="btn primary tr-go" id="trGo">Approve with Face ID</button>
+      <button class="link-btn tr-cancel" id="trCancel">Cancel</button>`);
+    s.querySelector('#trCancel').onclick = () => { closeSheet(); cb.onCancel && cb.onCancel(); };
+    s.querySelector('#trGo').onclick = () => {
+      const fid = document.createElement('div');
+      fid.className = 'faceid';
+      fid.innerHTML = `<div class="fid-box"><svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M4 18V10a6 6 0 0 1 6-6h8M46 4h8a6 6 0 0 1 6 6v8M60 46v8a6 6 0 0 1-6 6h-8M18 60h-8a6 6 0 0 1-6-6v-8"/><path class="fid-face" d="M22 24v4M42 24v4M32 24v12h-3M24 44c4 4 12 4 16 0"/></svg><span>Face ID</span></div>`;
+      document.getElementById('screen').appendChild(fid);
+      setTimeout(() => fid.classList.add('ok'), 900);
+      setTimeout(() => {
+        fid.remove();
+        const r = B.transfer(t.payee, t.amount, t.reference);
+        closeSheet();
+        toast(t.payee.own ? 'Moved to Saver' : 'Payment sent', `${B.gbp(t.amount)} ${t.payee.own ? 'is in your Saver' : 'to ' + t.payee.name}`, 'check', '#1f8a4c');
+        state.transfers.push({ to: t.payee.name, amount: t.amount, at: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) });
+        if (state.tab === 'home') renderHome();
+        cb.onDone && cb.onDone(r);
+      }, 1500);
+    };
+  }
+
   // ---------- spending card ----------
   function showSpending(d) {
     const max = Math.max(...d.categories.map((c) => Math.max(c.spent, c.usualByNow)), 1);
@@ -403,7 +446,7 @@
     return { sent: true, to: e.to, recipient: e.name, subject: e.subject, finalBody: e.body };
   }
 
-  window.App = { state, show, showBillBreakdown, showPlan, showSpending, showHumanHandoff, toast, openSheet, closeSheet, setScenario, clearScenario, setBuffer, addReminders, renderReminders, openEmailDraft, sendCurrentEmail, esc };
+  window.App = { state, show, showBillBreakdown, showPlan, showSpending, showHumanHandoff, showTransfer, toast, openSheet, closeSheet, setScenario, clearScenario, setBuffer, addReminders, renderReminders, openEmailDraft, sendCurrentEmail, esc };
   show('home');
   ['profile:changed', 'learn:changed'].forEach((ev) => window.addEventListener(ev, () => { if (state.tab === 'home') renderHome(); if (state.tab === 'help') renderLearn(); }));
   // rotate the Penny insight banner

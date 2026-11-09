@@ -10,8 +10,7 @@
   <aside class="stage-info">
     <div class="brand-chip"><span class="mini-orb"></span> Penny</div>
     <h1>Talk to your money.</h1>
-    <p class="lede">Penny is a voice assistant inside the banking app. Ask about your money out loud, explore "what ifs", and see the forecast change live — without touching your real balance.</p>
-    <p class="fine">Demo data · scenarios are previews only · Penny is not regulated financial advice.</p>
+    <p class="lede">Penny is the voice assistant in your banking app. Ask about your money, plan ahead, sort out bills and pay people — just by talking.</p>
   </aside>
 
   <div class="phone-wrap" id="phoneWrap">
@@ -68,68 +67,56 @@
           <header class="pp-head">
             <div class="pp-title">
               <b>Penny</b>
-              <span class="pp-state" id="ppState">Ready when you are</span>
+              <span class="pp-sub"><span class="pp-timer" id="ppTimer"></span></span>
+              <span class="pp-state sr-only" id="ppState" aria-live="polite">Ready when you are</span>
             </div>
             <div class="pp-tools">
-              <span class="pp-timer" id="ppTimer"></span>
-              <button class="icon-btn" id="btnText" title="Larger text" aria-label="Larger text">Aa</button>
-              <button class="icon-btn" id="btnSettings" title="Settings" aria-label="Settings">⋯</button>
+              <button class="icon-btn" id="btnHistory" title="Conversation" aria-label="Show conversation">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <i class="badge" id="histCount"></i>
+              </button>
+              <button class="icon-btn" id="btnSettings" title="Penny settings" aria-label="Penny settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
               <button class="icon-btn" id="btnMin" title="Minimise" aria-label="Minimise">
                 <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
               </button>
             </div>
           </header>
-          <div class="pp-settings" id="ppSettings">
-            <label><input type="checkbox" id="optBarge" /> Interrupt by voice <small>(use with headphones)</small></label>
-            <label><input type="checkbox" id="optVoice" checked /> Speak replies aloud</label>
-            <label class="buffer-row">Minimum buffer
-              <span class="stepper"><button data-step="-25">−</button><b id="bufVal">£100</b><button data-step="25">+</button></span>
-            </label>
-            <button class="btn ghost small" id="btnHuman" type="button" onclick="App.showHumanHandoff('Our team is here to help')">Talk to a person</button>
-            <button class="btn primary small" id="btnAllSettings" type="button">Language, voice &amp; personality…</button>
-          </div>
-
-          <div class="pp-orb-wrap" id="orbWrap" title="Tap to interrupt">
+          <div class="pp-orb-wrap" id="orbWrap">
             <canvas id="orb" width="300" height="300"></canvas>
             <div class="orb-hint" id="orbHint"></div>
           </div>
 
           <div class="subtitles" id="subtitles" dir="auto" aria-live="polite">
             <p class="sub-user" id="subUser"></p>
-            <p class="sub-penny" id="subPenny">Ask me anything about your money — or tap Bill and I'll explain one for you.</p>
+            <p class="sub-penny" id="subPenny">Ask me anything about your money.</p>
           </div>
 
           <div class="chips" id="chips"></div>
 
-          <details class="history" id="history">
-            <summary>Conversation <span id="histCount"></span></summary>
+          <div class="history-view" id="history">
+            <div class="hv-head"><b>Conversation</b><button type="button" id="btnHistClose">Done</button></div>
             <div class="history-list" id="historyList"></div>
-          </details>
+          </div>
 
           <div class="pp-controls">
-            <button class="ctl" id="btnMute" aria-label="Mute microphone">
-              <svg width="22" height="22" viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12h-2Z" fill="currentColor"/></svg>
-              <span>Mute</span>
-            </button>
-            <button class="ctl call" id="btnCall" aria-label="Start call">
-              <svg class="i-call" width="26" height="26" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2Z"/></svg>
-            </button>
-            <button class="ctl" id="btnUpload" aria-label="Upload a bill" onclick="document.getElementById('fileInput').click()">
-              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 7V3.5L18.5 9H13Zm-5 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
-              <span>Bill</span>
-            </button>
             <button class="ctl" id="btnKeyboard" aria-label="Type instead">
               <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M20 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm-9 3h2v2h-2V8Zm0 3h2v2h-2v-2ZM8 8h2v2H8V8Zm0 3h2v2H8v-2ZM5 8h2v2H5V8Zm0 3h2v2H5v-2Zm11 5H8v-2h8v2Zm0-3h-2v-2h2v2Zm0-3h-2V8h2v2Zm3 3h-2v-2h2v2Zm0-3h-2V8h2v2Z"/></svg>
               <span>Type</span>
             </button>
+            <button class="ctl call" id="btnCall" aria-label="Start call">
+              <svg class="i-call" width="26" height="26" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2Z"/></svg>
+            </button>
+            <button class="ctl" id="btnUpload" aria-label="Add a bill" onclick="document.getElementById('fileInput').click()">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 7V3.5L18.5 9H13Zm-5 4h8v2H8v-2Zm0 4h5v2H8v-2Z"/></svg>
+              <span>Add bill</span>
+            </button>
           </div>
           <form class="pp-input" id="typeForm" autocomplete="off">
-            <button type="button" class="attach" id="btnAttach" aria-label="Upload a bill" title="Upload a photo or PDF of a bill"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>
             <input type="file" id="fileInput" accept="image/*,application/pdf" hidden />
             <input id="typeInput" placeholder="Type a question for Penny…" />
             <button type="submit" aria-label="Send">↑</button>
           </form>
-          <p class="pp-note">Guidance, not financial advice · AI can make mistakes · <button type="button" onclick="App.showHumanHandoff('Our team is here to help')">Talk to a person</button></p>
+          <p class="pp-note">Guidance, not advice · AI can make mistakes · <button type="button" onclick="App.showHumanHandoff('Our team is here to help')">Talk to a person</button></p>
         </div>
 
         <!-- Sheets (post-call, email, tasks) -->

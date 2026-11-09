@@ -147,10 +147,12 @@
 
   function setMode(m) {
     S.mode = m;
-    $('#ppState').textContent = S.muted && S.call && m === 'listening' ? 'Mic muted · type or unmute' : STATE_LABEL[m];
+    const paused = S.muted && S.call && m === 'listening';
+    $('#ppState').textContent = paused ? 'Paused' : STATE_LABEL[m];
     const hint = $('#orbHint');
-    hint.textContent = m === 'speaking' ? 'Tap to interrupt' : '';
-    hint.classList.toggle('show', m === 'speaking');
+    hint.textContent = m === 'speaking' ? 'Tap to interrupt' : paused ? 'Paused · tap to resume' : S.call && m === 'listening' ? 'Tap to pause' : '';
+    hint.classList.toggle('show', !!hint.textContent);
+    $('#pennyPanel').classList.toggle('paused', paused);
     syncCaption();
   }
   function setUserLine(text, interim) {
@@ -181,7 +183,7 @@
   const WORKING = {
     run_forecast: 'Running the numbers…', plan_savings_goal: 'Building your plan…', get_transactions: 'Looking through your transactions…',
     draft_email: 'Writing your email…', send_email: 'Sending…', show_bill_breakdown: 'Reading your bill…', check_benefits: 'Checking what you could claim…',
-    get_lesson: 'Getting a lesson ready…', show_spending_breakdown: 'Looking at your spending…', talk_to_a_person: 'Finding someone to help…', start_quiz: 'Getting a quiz ready…', add_reminders: 'Adding reminders…',
+    get_lesson: 'Getting a lesson ready…', show_spending_breakdown: 'Looking at your spending…', prepare_transfer: 'Setting up the transfer…', talk_to_a_person: 'Finding someone to help…', start_quiz: 'Getting a quiz ready…', add_reminders: 'Adding reminders…',
   };
   function addHistory(role, text) {
     S.turns.push({ role, text });
@@ -191,13 +193,14 @@
     $('#historyList').appendChild(el);
     $('#historyList').scrollTop = 1e6;
     const n = S.turns.filter((t) => t.role !== 'tool').length;
-    $('#histCount').textContent = n ? `(${n})` : '';
+    $('#histCount').textContent = n ? String(n) : '';
   }
   const FOLLOW_UPS = {
     run_forecast: ['Make me a plan to afford it', 'What if I wait until payday?', 'Clear the what-if'],
     plan_savings_goal: ['Add this to my reminders', 'Can I do it faster?'],
     draft_email: ['Send it', 'Make it a bit firmer', 'Not now'],
     show_bill_breakdown: ['Remind me to pay it', 'Can I get a discount on this?'],
+    prepare_transfer: ['What will I have left?', 'Move £50 to my Saver'],
     check_benefits: ['How do I claim the first one?', 'Remind me to apply'],
     get_lesson: ['Quiz me on another topic'], start_quiz: ['Explain it more simply'],
   };
@@ -229,23 +232,32 @@
   $('#pennyFab').onclick = () => withConsent(() => { openPanel(); if (!S.call) startCall(); });
   $('#btnMin').onclick = minimisePanel;
   $('#island').onclick = () => { if (S.call) openPanel(); };
-  $('#btnText').onclick = () => { $('#pennyPanel').classList.toggle('big'); $('#btnText').classList.toggle('on'); };
-  $('#btnSettings').onclick = () => $('#ppSettings').classList.toggle('open');
-  $('#btnAllSettings').onclick = () => { $('#ppSettings').classList.remove('open'); PS().open(); };
-  $('#btnAttach').onclick = () => $('#fileInput').click();
+  $('#btnSettings').onclick = () => PS().open();
   $('#fileInput').onchange = (e) => { const f = e.target.files[0]; e.target.value = ''; if (f) handleUpload(f); };
   $('#btnKeyboard').onclick = () => { const p = $('#pennyPanel'); p.classList.toggle('typing'); $('#btnKeyboard').classList.toggle('on', p.classList.contains('typing')); if (p.classList.contains('typing')) $('#typeInput').focus(); };
   $('#typeForm').onsubmit = (e) => { e.preventDefault(); const v = $('#typeInput').value.trim(); if (!v) return; $('#typeInput').value = ''; ask(v); };
-  document.querySelectorAll('.stepper button').forEach((b) => (b.onclick = () => App.setBuffer(B.settings.buffer + +b.dataset.step)));
-  $('#orbWrap').onclick = () => { if (S.mode === 'speaking') interrupt(); else if (!S.call) startCall(); };
+  // The orb is the main control: tap to start, pause/resume listening, or interrupt Penny.
+  $('#orbWrap').onclick = () => {
+    if (!S.call) return startCall();
+    if (S.mode === 'speaking') return interrupt();
+    if (S.mode === 'listening') toggleMute();
+  };
   $('#btnCall').onclick = () => (S.call ? endCall() : startCall());
-  $('#btnMute').onclick = () => {
-    S.muted = !S.muted;
-    $('#btnMute').classList.toggle('on', S.muted);
-    $('#btnMute span').textContent = S.muted ? 'Unmute' : 'Mute';
+  function toggleMute(force) {
+    S.muted = typeof force === 'boolean' ? force : !S.muted;
     if (S.muted) stopRec(); else if (S.call && S.mode === 'listening') startRec();
     setMode(S.mode);
-  };
+  }
+  function showHistory(on) {
+    $('#pennyPanel').classList.toggle('show-history', on);
+    $('#btnHistory').classList.toggle('on', on);
+    if (on) $('#historyList').scrollTop = 1e6;
+  }
+  $('#btnHistory').onclick = () => showHistory(!$('#pennyPanel').classList.contains('show-history'));
+  $('#btnHistClose').onclick = () => showHistory(false);
+  const applyTextSize = () => $('#pennyPanel').classList.toggle('big', !!PS().state.bigText);
+  window.addEventListener('penny:settings', applyTextSize);
+  applyTextSize();
 
   function startTimer() {
     S.callStart = Date.now();
@@ -315,7 +327,7 @@
       if (!heard) return;
       if (S.mode === 'speaking') {
         // Barge-in (headphones mode): ignore Penny's own voice leaking into the mic.
-        if (!$('#optBarge').checked || isEcho(heard) || heard.split(/\s+/).length < 2) return;
+        if (!PS().state.barge || isEcho(heard) || heard.split(/\s+/).length < 2) return;
         interrupt(true);
       }
       if (S.mode !== 'listening') return;
@@ -361,9 +373,9 @@
       speakResolve = resolve;
       const words = text.split(/\s+/).filter(Boolean);
       setPennyLine(text, false);
-      if (!$('#optVoice').checked) { highlightWords(words.length); return setTimeout(done, 300); }
+      if (PS().state.speak === false && !S.forceVoice) { highlightWords(words.length); return setTimeout(done, 300); }
       setMode('speaking');
-      if ($('#optBarge').checked) startRec(); else stopRec(); // echo protection: mic closed while Penny talks
+      if (PS().state.barge) startRec(); else stopRec(); // echo protection: mic closed while Penny talks
       if (S.tts === 'elevenlabs') return speakEleven(text, words.length).catch(() => speakBrowser(text, words));
       speakBrowser(text, words);
     });
@@ -458,6 +470,8 @@
     return `[Live app state, not said by the user: ${JSON.stringify({
       time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
       minimumBuffer: B.settings.buffer,
+      currentBalanceNow: B.accounts.current.balance, saverBalanceNow: B.accounts.saver.balance,
+      transfersThisSession: App.state.transfers,
       whatIfPreviewOnDashboard: App.state.scenario ? App.state.scenario.label : null,
       lowestBeforePaydayOnScreen: f.lowestBeforePayday,
       openReminders: App.state.reminders.filter((r) => !r.done).map((r) => r.title),
@@ -470,7 +484,7 @@
   const TOOL_LABEL = {
     run_forecast: 'Updated your forecast preview', clear_forecast_scenario: 'Cleared the what-if', get_transactions: 'Checked transactions',
     plan_savings_goal: 'Built a savings plan', set_minimum_buffer: 'Updated your buffer', draft_email: 'Drafted an email for review',
-    send_email: 'Sent the email', show_spending_breakdown: 'Showed your spending', talk_to_a_person: 'Offered a colleague', add_reminders: 'Added reminders', show_screen: 'Opened a screen', set_language: 'Switched language', show_bill_breakdown: 'Explained your bill', check_benefits: 'Checked your benefits', start_quiz: 'Opened a quiz', get_lesson: 'Pulled up a lesson', open_penny_settings: 'Opened settings',
+    send_email: 'Sent the email', show_spending_breakdown: 'Showed your spending', prepare_transfer: 'Prepared a transfer for approval', talk_to_a_person: 'Offered a colleague', add_reminders: 'Added reminders', show_screen: 'Opened a screen', set_language: 'Switched language', show_bill_breakdown: 'Explained your bill', check_benefits: 'Checked your benefits', start_quiz: 'Opened a quiz', get_lesson: 'Pulled up a lesson', open_penny_settings: 'Opened settings',
   };
 
   function runTool(name, input) {
@@ -505,6 +519,23 @@
         if (App.state.tab !== 'home') App.show('home');
         App.toast('Added to Reminders', `${n} new reminder${n === 1 ? '' : 's'} from Penny`, 'check-square', '#5a287d');
         return { added: n };
+      }
+      case 'prepare_transfer': {
+        const payee = B.findPayee(input.to);
+        const amount = Math.round((+input.amount || 0) * 100) / 100;
+        if (!payee) return { status: 'payee_not_found', savedPayees: B.payees.map((p) => p.name), note: 'For security, new payees must be added in Payments (with Confirmation of Payee) before Penny can pay them.' };
+        if (!(amount > 0)) return { status: 'need_amount' };
+        if (amount > B.TRANSFER_LIMIT) return { status: 'over_limit', limit: B.TRANSFER_LIMIT, note: 'Larger payments must be made in Payments.' };
+        if (amount > B.accounts.current.balance + B.accounts.current.overdraft) return { status: 'insufficient_funds', available: B.accounts.current.balance + B.accounts.current.overdraft };
+        App.showTransfer({ payee, amount, reference: input.reference }, {
+          onDone: (r) => {
+            const msg = payee.own ? `Done. ${B.gbp0(amount)} is in your Saver.` : `Done. ${B.gbp(amount)} is on its way to ${payee.name.split(' ')[0]}.`;
+            addHistory('tool', `Sent ${B.gbp(amount)} to ${payee.name}`);
+            if (S.call && S.mode !== 'thinking') { stopRec(); speak(msg).then(() => { if (S.call) { tone('start'); setMode('listening'); startRec(); } }); }
+          },
+          onCancel: () => addHistory('tool', 'Transfer cancelled'),
+        });
+        return { status: 'awaiting_customer_approval', to: payee.name, amount, balanceNow: B.accounts.current.balance, balanceAfter: Math.round((B.accounts.current.balance - amount) * 100) / 100, note: 'The approval screen is open. Nothing has been sent yet; the customer must approve with Face ID.' };
       }
       case 'show_spending_breakdown': { const d = B.spendingBreakdown(); App.showSpending(d); return { ...d, shownOnScreen: true }; }
       case 'talk_to_a_person': {
@@ -620,7 +651,7 @@
     const fu = S.lastTools.map((t) => FOLLOW_UPS[t]).filter(Boolean).pop();
     renderChips(fu);
     if (gen !== S.gen) return; // superseded by a newer question or the call ended
-    if (!S.call && $('#optVoice').checked) {
+    if (!S.call && PS().state.speak !== false) {
       await speak(reply);
       if (gen === S.gen && !S.call) setMode('idle');
       return;
@@ -664,8 +695,8 @@
 
   function previewVoice(text) {
     if (S.call) return;
-    const prev = $('#optVoice').checked; $('#optVoice').checked = true;
-    speak(text).then(() => { $('#optVoice').checked = prev; setMode('idle'); });
+    S.forceVoice = true;
+    speak(text).then(() => { S.forceVoice = false; setMode('idle'); });
   }
   window.addEventListener('penny:lang', () => { const l = PS().lang(); $('#subtitles').setAttribute('dir', l.rtl ? 'rtl' : 'auto'); if (S.call && S.mode === 'listening') startRec(); });
 
@@ -674,7 +705,7 @@
     if (S.call) return;
     openPanel();
     S.call = true; S.muted = false;
-    $('#btnMute').classList.remove('on'); $('#btnMute span').textContent = 'Mute';
+
     $('#btnCall').classList.add('end'); $('#btnCall').setAttribute('aria-label', 'End call');
     $('#pennyFab').classList.add('live');
     setMode('connecting');
@@ -730,7 +761,6 @@
   $('#stMic').textContent = SR ? `Voice: speech recognition ready (${S.tts === 'elevenlabs' ? 'ElevenLabs' : 'browser'} voice)` : 'Voice input needs Chrome, Edge or Safari (typing works)';
   $('#demoPrompts').innerHTML = SUGGESTIONS.concat(['Email Bright Energy and ask if they can lower my bill', 'What benefits am I entitled to?', 'Quiz me on ISAs out loud', '¿Puedes hablar en español?', "What's the weather like?"]).map((q) => `<li>${esc(q)}</li>`).join('');
   $('#demoPrompts').querySelectorAll('li').forEach((li) => (li.onclick = () => ask(li.textContent)));
-  $('#bufVal').textContent = B.gbp0(B.settings.buffer);
 
   window.Penny = {
     open: openPanel,

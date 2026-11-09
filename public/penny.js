@@ -594,7 +594,10 @@
 
   async function callClaude() {
     const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: S.messages, context: context() }) });
-    const j = await r.json().catch(() => ({ error: 'Bad response from server' }));
+    const j = await r.json().catch(() => null);
+    if (!j) { // not JSON: the server or the share link has gone away (e.g. a Cloudflare error page)
+      const err = new Error(`Can't reach Penny's server (HTTP ${r.status})`); err.status = r.status; err.offline = true; throw err;
+    }
     if (!r.ok) { const err = new Error(j.error || `Server error ${r.status}`); err.status = r.status; throw err; }
     return j;
   }
@@ -668,7 +671,9 @@
         return converse(text, gen, attachment, true);
       }
       if (e.status !== 403) addHistory('tool', `Problem: ${String(e.message || e).slice(0, 220)}`);
-      reply = authProblem ? e.message : "Sorry, I lost connection for a second. Could you say that again?";
+      reply = authProblem ? e.message
+        : e.offline || e instanceof TypeError ? "I can't reach my server right now. If you're on a shared link, it may have been switched off — ask for a fresh link and try again."
+        : "Sorry, I lost connection for a second. Could you say that again?";
     }
     reply = reply || "Done — it's on your screen.";
     addHistory('penny', reply);

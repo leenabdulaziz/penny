@@ -661,7 +661,7 @@
     if (!SR) { $('#pennyPanel').classList.add('typing'); $('#btnKeyboard').classList.add('on'); }
     await startMicLevel();
     const gen = ++S.gen;
-    S.callTurnStart = S.turns.length; // Penny remembers earlier calls; the summary covers just this one
+    S.callTurnStart = S.turns.length; // Penny remembers earlier calls; this marks where the current call began
     setUserLine('');
     if (opts.silent) return; // e.g. opened from an alert: the question is asked straight away
     if (!S.greeted) {
@@ -690,72 +690,7 @@
     setUserLine('');
     tone('end');
     setPennyLine('Call ended. Tap the green button to talk again.');
-    const callTurns = S.turns.slice(S.callTurnStart);
-    const userTurns = callTurns.filter((t) => t.role === 'user').length;
-    const meaningful = /forecast|plan|email|reminders|benefits|bill/i.test(callTurns.filter((t) => t.role === 'tool').map((t) => t.text).join(' '));
-    if (userTurns >= 3 || (userTurns >= 1 && meaningful)) {
-      minimisePanel();
-      showPostCall();
-    }
-  }
-
-  // ======================= POST-CALL ACTION CARDS =======================
-  async function showPostCall() {
-    const transcript = S.turns.slice(S.callTurnStart).map((t) => (t.role === 'user' ? `Customer: ${t.text}` : t.role === 'penny' ? `Penny: ${t.text}` : `[action: ${t.text}]`)).join('\n');
-    App.openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Call with Penny</h3><div class="sub">${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${$('#islandTime').textContent}</div></div></div>
-      <div class="loading"><div class="spinner"></div>Penny is writing up your call…</div>`);
-    let w;
-    try {
-      const r = await fetch('/api/wrapup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript, context: context(), language: PS().lang().name }) });
-      w = await r.json();
-      if (!r.ok) throw new Error(w.error);
-    } catch (e) {
-      const pennyLines = S.turns.slice(S.callTurnStart).filter((t) => t.role === 'penny').map((t) => t.text);
-      w = {
-        title: 'Your money check-in', summary: pennyLines.slice(-2).join(' ') || 'We talked through your money.',
-        key_points: pennyLines.slice(0, 3), tasks: [{ title: 'Review your forecast before payday', due: B.fmtDate(B.addDays(B.nextPayday(), -3)) }, { title: 'Check subscriptions you no longer use', due: 'This week' }],
-        followup_email: { needed: false },
-      };
-    }
-    renderPostCall(w);
-  }
-
-  function renderPostCall(w) {
-    const fe = w.followup_email && w.followup_email.needed ? w.followup_email : null;
-    const s = App.openSheet(`
-      <div class="sum-head"><div class="ib-orb"></div><div><h3>${esc(w.title || 'Call summary')}</h3><div class="sub">Call with Penny · ${$('#islandTime').textContent}</div></div></div>
-      <div class="sum-card">${esc(w.summary)}${w.key_points?.length ? `<ul>${w.key_points.map((k) => `<li>${esc(k)}</li>`).join('')}</ul>` : ''}</div>
-      <div class="section-h" style="padding:6px 4px">Next steps</div>
-      <button class="cta" id="ctaEmail"><span class="cta-ic">✉</span><span>Send summary to email<small>${esc(B.customer.email)}</small></span><span class="chev">›</span></button>
-      <button class="cta" id="ctaTasks"><span class="cta-ic">✓</span><span>Add tasks to Reminders<small>${(w.tasks || []).length} suggested task${(w.tasks || []).length === 1 ? '' : 's'}</small></span><span class="chev">›</span></button>
-      <div id="taskPick"></div>
-      ${fe ? `<button class="cta" id="ctaDraft"><span class="cta-ic">✎</span><span>Email ${esc(fe.recipient_name)}<small>Penny drafted it — review before sending</small></span><span class="chev">›</span></button>`
-        : `<button class="cta" id="ctaCallback"><span class="cta-ic">☎</span><span>Book a callback with a money coach<small>Free, no obligation</small></span><span class="chev">›</span></button>`}
-      <div class="btn-row"><button class="btn ghost" id="ctaClose">Done</button></div>`);
-    s.querySelector('#ctaClose').onclick = App.closeSheet;
-    s.querySelector('#ctaEmail').onclick = (e) => {
-      const b = e.currentTarget; if (b.classList.contains('done')) return;
-      b.classList.add('done'); b.querySelector('small').textContent = 'Sent ✓';
-      App.toast('Summary sent', `Check ${B.customer.email}`, '✉', '#1f8a4c');
-    };
-    s.querySelector('#ctaTasks').onclick = (e) => {
-      const b = e.currentTarget; if (b.classList.contains('done')) return;
-      const tasks = w.tasks || [];
-      const pick = s.querySelector('#taskPick');
-      pick.innerHTML = `<div class="task-pick">${tasks.map((t, i) => `<label><input type="checkbox" checked data-i="${i}"/><span>${esc(t.title)}<small>${esc(t.due || '')}</small></span></label>`).join('')}</div>
-        <button class="btn primary" id="addTasks" style="width:100%;margin-bottom:10px">Add to Reminders</button>`;
-      pick.querySelector('#addTasks').onclick = () => {
-        const chosen = [...pick.querySelectorAll('input:checked')].map((i) => tasks[+i.dataset.i]);
-        const n = App.addReminders(chosen);
-        pick.innerHTML = '';
-        b.classList.add('done'); b.querySelector('small').textContent = `${n} added ✓`;
-        App.toast('Added to Reminders', `${n} task${n === 1 ? '' : 's'} on your dashboard`, '✅', '#5a287d');
-      };
-    };
-    const d = s.querySelector('#ctaDraft');
-    if (d) d.onclick = () => App.openEmailDraft(fe);
-    const cb = s.querySelector('#ctaCallback');
-    if (cb) cb.onclick = (e) => { e.currentTarget.classList.add('done'); e.currentTarget.querySelector('small').textContent = 'Requested ✓ — we\'ll call within 2 working days'; App.toast('Callback requested', 'A money coach will be in touch', '☎', '#1f8a4c'); };
+    setTimeout(() => { if (!S.call && S.open) minimisePanel(); }, 700); // tuck Penny away, like a real assistant
   }
 
   // When a sheet (e.g. email draft) closes mid-call, bring the call panel back.
@@ -778,6 +713,6 @@
   window.Penny = {
     open: openPanel,
     openAndAsk: (q) => withConsent(async () => { openPanel(); if (!S.call) await startCall({ silent: true }); ask(q); }),
-    ask, startCall, endCall, previewVoice, handleUpload, state: S, _renderPostCall: renderPostCall,
+    ask, startCall, endCall, previewVoice, handleUpload, state: S,
   };
 })();

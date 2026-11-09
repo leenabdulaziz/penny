@@ -254,36 +254,6 @@ async function handleChat(body) {
   return { content: res.content, stop_reason: res.stop_reason };
 }
 
-const WRAPUP_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['title', 'summary', 'key_points', 'tasks', 'followup_email'],
-  properties: {
-    title: { type: 'string' },
-    summary: { type: 'string' },
-    key_points: { type: 'array', items: { type: 'string' } },
-    tasks: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['title', 'due'], properties: { title: { type: 'string' }, due: { type: 'string' } } } },
-    followup_email: {
-      type: 'object', additionalProperties: false,
-      required: ['needed', 'recipient_name', 'recipient_email', 'subject', 'body'],
-      properties: { needed: { type: 'boolean' }, recipient_name: { type: 'string' }, recipient_email: { type: 'string' }, subject: { type: 'string' }, body: { type: 'string' } },
-    },
-  },
-};
-
-async function handleWrapup({ transcript, context, language }) {
-  const res = await createMessage({
-    system: `You write the post-call summary for Penny, a banking voice assistant. Be accurate to the transcript and data, concise, warm and non-judgemental. Address the customer as "you". Write everything in ${language || 'English'}.`,
-    messages: [{
-      role: 'user',
-      content: `Customer data:\n${JSON.stringify(context)}\n\nCall transcript:\n${transcript}\n\nProduce: a 3-6 word title; a 2-3 sentence summary of the advice and numbers discussed; 2-4 key points; 2-4 short actionable tasks with a realistic due (e.g. "Mon 10 Nov", "before payday"); and followup_email: if contacting a company (e.g. a bill provider) would help with something discussed, set needed=true and draft a polite, specific email signed by the customer using real data; otherwise needed=false and empty strings.`,
-    }],
-    output_config: { format: { type: 'json_schema', schema: WRAPUP_SCHEMA } },
-  });
-  const text = res.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-  return JSON.parse(text);
-}
-
 async function handleTTS({ text, voice_id, language }, res) {
   const voice = /^[A-Za-z0-9]{10,40}$/.test(voice_id || '') ? voice_id : ELEVEN_VOICE;
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, {
@@ -327,11 +297,6 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && url.pathname === '/api/chat') {
       const out = await handleChat(await readJSON(req));
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify(out));
-    }
-    if (req.method === 'POST' && url.pathname === '/api/wrapup') {
-      const out = await handleWrapup(await readJSON(req));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify(out));
     }

@@ -28,7 +28,6 @@ Use **Chrome or Edge** on a laptop because speech recognition needs it. Allow mi
 | Live forecast chart: expected line, what-if line, likely range, buffer, payday, assumptions | `app.js` → `renderForecast` |
 | Scenarios are previews only and never change the real balance | `state.scenario` is separate from `Bank.accounts` |
 | Penny drafts an email to a provider → you edit it → you or Penny send it after you confirm | `draft_email` / `send_email` tools |
-| **Post-call action cards**: email the summary, add tasks to Reminders, email the provider (or book a callback) | `/api/wrapup` + `renderPostCall` |
 | Optional ElevenLabs voice (`ELEVENLABS_API_KEY`) | `server.js` → `/api/tts` |
 
 ### Claude's tools
@@ -54,7 +53,7 @@ Claude also gets a live JSON snapshot of the account. It includes balances, bill
 3. *"What's stressing my budget the most?"* Penny names the Bright Energy price rise.
 4. *"Can you email them and ask if they can lower it?"* An editable draft opens. Change a word, then say *"Yes, send it"*, and a toast confirms it was sent.
 5. *"What's the weather?"* Penny politely steers you back to money.
-6. End the call. The post-call card appears: **Send summary to email**, **Add tasks to Reminders**, **Email Bright Energy**.
+6. *"Add that to my reminders."* The tasks appear in the Reminders widget on the home screen.
 
 ## Notes
 - The default model is `claude-opus-5-5` at `low` effort. Set `PENNY_MODEL=claude-haiku-5-5` for the lowest voice latency.

@@ -660,14 +660,14 @@
     } catch (e) {
       console.error('[Penny]', e.status, e.message);
       S.messages.length = startLen; // drop the unfinished turn so the conversation stays valid
-      const authProblem = e.status === 401 || /api key|ANTHROPIC|credit balance/i.test(e.message);
+      const authProblem = e.status === 401 || e.status === 403 || /api key|ANTHROPIC|credit balance/i.test(e.message);
       if (!retried && !authProblem) {
         // Recover silently: start a fresh conversation with the same question (fixes most one-off API errors).
         S.messages = []; S.frozenContext = null; S.sentKey = null;
         await new Promise((r) => setTimeout(r, 400));
         return converse(text, gen, attachment, true);
       }
-      addHistory('tool', `Problem: ${String(e.message || e).slice(0, 220)}`);
+      if (e.status !== 403) addHistory('tool', `Problem: ${String(e.message || e).slice(0, 220)}`);
       reply = authProblem ? e.message : "Sorry, I lost connection for a second. Could you say that again?";
     }
     reply = reply || "Done — it's on your screen.";

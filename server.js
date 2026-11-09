@@ -322,6 +322,19 @@ function apiError(res, err) {
 //    anyone without it sees "This link is private".
 //  - PENNY_PASSWORD: alternatively, a browser password prompt.
 const PASSWORD = process.env.PENNY_PASSWORD || '';
+// Shared-link visitors (anyone not on this Mac) can be limited so they don't use your AI credit:
+//  - PENNY_VIEW_ONLY=1 → they can look around the app, but Penny won't chat (no credit used)
+//  - PENNY_VISITOR_CHATS=10 → they can send up to 10 messages in total, then Penny stops
+const VIEW_ONLY = process.env.PENNY_VIEW_ONLY === '1';
+const VISITOR_LIMIT = +process.env.PENNY_VISITOR_CHATS || 0;
+let visitorChats = 0;
+const isVisitor = (req) => !!req.headers['cf-connecting-ip'] || !!req.headers['x-forwarded-for']; // came through the share link, not localhost
+function chatAllowance(req) {
+  if (!isVisitor(req)) return '';
+  if (VIEW_ONLY && !VISITOR_LIMIT) return "This is a preview link, so I can't chat here. Have a look around the app though!";
+  if (VISITOR_LIMIT && visitorChats >= VISITOR_LIMIT) return "That's all the questions for this preview. Thanks for trying Penny!";
+  return '';
+}
 const ACCESS_KEY = process.env.PENNY_ACCESS_KEY || '';
 const COOKIE = 'penny_access';
 function hasCookie(req) {
@@ -357,15 +370,18 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && url.pathname === '/api/config') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ model: MODEL, tts: ELEVEN_KEY ? 'elevenlabs' : 'browser' }));
+      return res.end(JSON.stringify({ model: MODEL, tts: ELEVEN_KEY && !(VIEW_ONLY && isVisitor(req)) ? 'elevenlabs' : 'browser', preview: VIEW_ONLY && isVisitor(req) }));
     }
     if (req.method === 'POST' && url.pathname === '/api/chat') {
+      const limit = chatAllowance(req);
+      if (limit) { res.writeHead(403, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ error: limit, preview: true })); }
       const out = await handleChat(await readJSON(req));
+      if (VISITOR_LIMIT && isVisitor(req)) visitorChats++;
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify(out));
     }
     if (req.method === 'GET' && url.pathname === '/api/tts') {
-      if (!ELEVEN_KEY) { res.writeHead(404); return res.end(); }
+      if (!ELEVEN_KEY || (VIEW_ONLY && isVisitor(req))) { res.writeHead(404); return res.end(); }
       return await handleTTS({ text: url.searchParams.get('text'), voice_id: url.searchParams.get('voice'), language: url.searchParams.get('lang') }, res);
     }
     if (req.method === 'POST' && url.pathname === '/api/tts') {

@@ -51,6 +51,12 @@ npm run share
 ```
 It prints a private link like `https://something.trycloudflare.com/?key=…`. Send that link: anyone without the key sees "This link is private". It works while your Mac is on and the window stays open, and the link changes each time.
 
+By default the link is **look-only**: visitors can explore the whole app, but Penny won't chat, so none of your AI credit is used. To let them ask Penny a few questions, add a limit, for example 10 questions in total:
+```bash
+npm run share -- 10
+```
+Visitors can't change anything: a link only shows the website.
+
 ## Put Penny online permanently (optional)
 1. Go to render.com and sign up with GitHub.
 2. Click **New → Blueprint** and choose this repository. Render reads `render.yaml`.

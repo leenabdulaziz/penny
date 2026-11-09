@@ -358,7 +358,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(302, { 'Set-Cookie': `${COOKIE}=${encodeURIComponent(ACCESS_KEY)}; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax${req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : ''}`, Location: u.pathname + (u.search || '') });
       return res.end();
     }
-    if (!hasCookie(req) && !(PASSWORD && passwordOk(req))) {
+    if (isVisitor(req) && !hasCookie(req) && !(PASSWORD && passwordOk(req))) { // your own Mac (localhost) never needs the key
       res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' });
       return res.end(PRIVATE_PAGE);
     }

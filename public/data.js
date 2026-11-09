@@ -335,6 +335,23 @@
     return list;
   }
 
+  // Everyday spending this pay cycle vs usual, with the top merchant per category (for the on-screen card).
+  function spendingBreakdown() {
+    const pc = payCycleComparison();
+    const avg = categoryMonthlyAverages();
+    const frac = pc.daysIntoCycle / 30.4;
+    const skip = ['Rent', 'Bills', 'Subscriptions', 'Card repayment', 'Income'];
+    const from = pc.cycleStart;
+    const rows = Object.entries(pc.byCategory).filter(([c]) => !skip.includes(c)).map(([c, v]) => {
+      const m = {};
+      tx.filter((t) => t.cat === c && t.date >= from && t.amount < 0).forEach((t) => (m[t.merchant] = (m[t.merchant] || 0) - t.amount));
+      const top = Object.entries(m).sort((a, b) => b[1] - a[1])[0];
+      return { category: c, spent: r2(v), usualByNow: r2((avg[c] || 0) * frac), topMerchant: top ? { name: top[0], amount: r2(top[1]) } : null };
+    }).sort((a, b) => b.spent - a.spent);
+    const fixed = r2(skip.reduce((a, c) => a + (pc.byCategory[c] || 0), 0));
+    return { since: pc.cycleStart, daysIntoCycle: pc.daysIntoCycle, everydayTotal: r2(rows.reduce((a, r) => a + r.spent, 0)), billsAndRent: fixed, categories: rows, currentBalance: accounts.current.balance };
+  }
+
   // Personalised alerts for the "Penny noticed" banner, most significant first.
   function spendingAlerts() {
     const out = [];
@@ -410,6 +427,6 @@
     TODAY, customer, accounts, BILLS, SALARY, settings, tx,
     iso, fmtDate, fmtShort, gbp, gbp0, addDays, diffDays,
     nextPayday, lastPayday, essentialsDaily, spendBetween, weekComparison, payCycleComparison, monthlyTotals,
-    categoryMonthlyAverages, subscriptions, spendingAlerts, forecast, forecastSummaryForAI, savingsPlan, pressures, snapshotForAI, getTransactions, nextBillDate,
+    categoryMonthlyAverages, subscriptions, spendingAlerts, spendingBreakdown, forecast, forecastSummaryForAI, savingsPlan, pressures, snapshotForAI, getTransactions, nextBillDate,
   };
 })();

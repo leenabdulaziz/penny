@@ -79,6 +79,7 @@
             <label class="buffer-row">Minimum buffer
               <span class="stepper"><button data-step="-25">−</button><b id="bufVal">£100</b><button data-step="25">+</button></span>
             </label>
+            <button class="btn ghost small" id="btnHuman" type="button" onclick="App.showHumanHandoff('Our team is here to help')">🤝 Talk to a person</button>
             <button class="btn primary small" id="btnAllSettings" type="button">⚙️ Language, voice & personality…</button>
           </div>
 
@@ -87,7 +88,7 @@
             <div class="orb-hint" id="orbHint"></div>
           </div>
 
-          <div class="subtitles" id="subtitles" dir="auto">
+          <div class="subtitles" id="subtitles" dir="auto" aria-live="polite">
             <p class="sub-user" id="subUser"></p>
             <p class="sub-penny" id="subPenny">Ask me anything about your money — or tap Bill and I'll explain one for you.</p>
           </div>

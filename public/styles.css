@@ -399,6 +399,11 @@ button { font-family: inherit; cursor: pointer; }
 .bill-key small { display: block; color: var(--ink-3); font-size: 11.5px; } .bill-key b { font-size: 16px; }
 .bill-item { padding: 8px 0; border-top: 1px solid var(--lav-2); } .bill-item:first-child { border-top: 0; }
 .bi-top { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.sp-row { padding: 8px 0; border-top: 1px solid var(--lav-2); } .sp-row:first-child { border-top: 0; }
+.sp-track { position: relative; height: 7px; background: var(--lav-2); border-radius: 4px; margin: 6px 0 4px; }
+.sp-track span { display: block; height: 100%; background: var(--purple); border-radius: 4px; } .sp-track span.over { background: var(--red); }
+.sp-track i { position: absolute; top: -3px; width: 2px; height: 13px; background: var(--ink); border-radius: 1px; }
+.consent p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.45; } .consent p:last-child { margin: 0; }
 .up-thumb { max-height: 70px; border-radius: 8px; margin-bottom: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
 .pp-input .attach { background: rgba(255,255,255,.12); color: #fff; font-size: 15px; }
 .pp-controls { gap: 18px; }

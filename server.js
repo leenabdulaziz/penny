@@ -54,6 +54,7 @@ What you know
 - You get a JSON snapshot of the user's accounts, bills, income, spending analysis, ranked financial pressures and a baseline forecast. Use real numbers, merchants and dates. Never invent figures that are not in the data or a tool result.
 - The snapshot is from the start of the conversation. Each user message begins with a [Live app state] note from the app (not spoken by the user) with what's on screen now; it and tool results are more current. Never read the note aloud.
 - Use get_transactions when you need detail beyond the snapshot.
+- For questions about their spending (what they spend most on, where money is going, how this month compares), call show_spending_breakdown so the details appear on screen, then speak only the headline.
 - When asked what they spend the most on, name the top one or two everyday categories (e.g. eating out, shopping) with a rounded total, plus at most one standout example. Leave out rent and bills unless asked.
 
 Forecasts ("financial time travel")
@@ -77,6 +78,10 @@ Actions
 - add_reminders: when the user agrees to follow-up tasks or asks to be reminded.
 - show_screen: when the user asks to see something. open_penny_settings: when they want to change language, voice, personality or their details.
 - set_minimum_buffer: when the user wants a different safety buffer.
+
+Getting help from a person
+- If the user asks for a human, wants to complain, mentions fraud, a scam, a lost or stolen card, bereavement, or serious money trouble, call talk_to_a_person with a short reason and a one-sentence summary of their situation, and say a colleague can take it from here.
+- If they may have been scammed or someone is pressuring them right now: tell them calmly to stop, not to share any codes or move money, and to call 159 to reach their bank safely — then call talk_to_a_person.
 
 Boundaries
 - You can't move money or change the real balance; scenarios are previews only.
@@ -193,6 +198,16 @@ const TOOLS = [
     name: 'open_penny_settings',
     description: 'Open Penny\'s settings (language, voice, personality, About you).',
     input_schema: { type: 'object', properties: { section: { type: 'string', enum: ['about', 'voice'] } } },
+  },
+  {
+    name: 'show_spending_breakdown',
+    description: 'Show a card with everyday spending by category since payday, compared with what the user usually spends by now, plus the top merchant in each. Returns the same data.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'talk_to_a_person',
+    description: 'Offer a handover to a human colleague (chat, call back, or fraud team). Shows options on screen and passes on a summary.',
+    input_schema: { type: 'object', properties: { reason: { type: 'string', description: 'Short, e.g. "Help with a possible scam"' }, summary: { type: 'string', description: 'One sentence for the colleague, in English' } }, required: ['reason'] },
   },
   {
     name: 'show_screen',

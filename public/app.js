@@ -277,6 +277,38 @@
     s.querySelector('#billRem').onclick = () => { addReminders([{ title: `Pay ${d.issuer || 'bill'}${d.total_due ? ' — ' + d.total_due : ''}`, due: d.due_date || '' }]); toast('Reminder added', d.issuer || 'Bill', '✅', '#5a287d'); closeSheet(); };
   }
 
+  // ---------- spending card ----------
+  function showSpending(d) {
+    const max = Math.max(...d.categories.map((c) => Math.max(c.spent, c.usualByNow)), 1);
+    const s = openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Where your money's going</h3><div class="sub">Since payday · ${B.fmtShort(new Date(d.since))} – today</div></div></div>
+      <div class="bill-key"><div><small>Balance now</small><b>${B.gbp(d.currentBalance)}</b></div><div><small>Everyday spending</small><b>${B.gbp(d.everydayTotal)}</b></div></div>
+      <div class="sum-card">${d.categories.slice(0, 6).map((c) => {
+        const over = c.usualByNow > 5 && c.spent > c.usualByNow * 1.25;
+        return `<div class="sp-row"><div class="bi-top"><span>${CAT_EMOJI[c.category] || '•'} ${esc(c.category)}</span><b class="amt" ${over ? 'style="color:var(--red)"' : ''}>${B.gbp(c.spent)}</b></div>
+          <div class="sp-track"><span style="width:${(c.spent / max) * 100}%" class="${over ? 'over' : ''}"></span>${c.usualByNow ? `<i style="left:${(c.usualByNow / max) * 100}%" title="Usual by now"></i>` : ''}</div>
+          <div class="muted">${c.topMerchant ? `Mostly ${esc(c.topMerchant.name)} (${B.gbp(c.topMerchant.amount)})` : ''}${c.usualByNow ? ` · usually ~${B.gbp0(c.usualByNow)} by now` : ''}</div></div>`;
+      }).join('')}</div>
+      <div class="ben-note">Rent and bills so far: ${B.gbp(d.billsAndRent)} (not shown). The line on each bar is what you usually spend by this point.</div>
+      <div class="btn-row"><button class="btn ghost" id="spIns">Open Insights</button><button class="btn primary" id="spOk">Got it</button></div>`);
+    s.querySelector('#spOk').onclick = closeSheet;
+    s.querySelector('#spIns').onclick = () => { closeSheet(); show('insights'); };
+  }
+
+  // ---------- talk to a person ----------
+  function showHumanHandoff(reason, summary) {
+    const s = openSheet(`<div class="sum-head"><div class="ib-orb" style="background:radial-gradient(circle at 35% 30%,#fff,#bfe9d1 30%,#1f8a4c 70%)"></div><div><h3>Talk to a person</h3><div class="sub">${esc(reason || 'Our team is here to help')}</div></div></div>
+      ${summary ? `<div class="sum-card"><b>Penny will pass this on</b><div class="muted" style="margin-top:4px">${esc(summary)}</div><small class="hint">So you don't have to repeat yourself.</small></div>` : ''}
+      <button class="cta" data-h="chat"><span class="cta-ic">💬</span><span>Chat with a colleague<small>Usually replies in a few minutes</small></span><span class="chev">›</span></button>
+      <button class="cta" data-h="call"><span class="cta-ic">📞</span><span>Request a call back<small>We'll call you within the hour</small></span><span class="chev">›</span></button>
+      <button class="cta" data-h="fraud"><span class="cta-ic">🛡️</span><span>Report fraud or a scam<small>24/7 — call 159 if you think it's happening now</small></span><span class="chev">›</span></button>
+      <div class="btn-row"><button class="btn ghost" id="hhClose">Not now</button></div>`);
+    s.querySelectorAll('[data-h]').forEach((b) => (b.onclick = () => {
+      const m = { chat: ['Connecting you…', 'A colleague will join this chat shortly'], call: ['Call back requested', "We'll call your registered number"], fraud: ['Fraud team notified', "We'll call you shortly. You can freeze your card in Card settings."] }[b.dataset.h];
+      closeSheet(); toast(m[0], m[1], '🤝', '#1f8a4c');
+    }));
+    s.querySelector('#hhClose').onclick = closeSheet;
+  }
+
   // ---------- savings plan card ----------
   function showPlan(pl) {
     const target = B.addDays(B.TODAY, Math.round(pl.months * 30.4));
@@ -370,7 +402,7 @@
     return { sent: true, to: e.to, recipient: e.name, subject: e.subject, finalBody: e.body };
   }
 
-  window.App = { state, show, showBillBreakdown, showPlan, toast, openSheet, closeSheet, setScenario, clearScenario, setBuffer, addReminders, renderReminders, openEmailDraft, sendCurrentEmail, esc };
+  window.App = { state, show, showBillBreakdown, showPlan, showSpending, showHumanHandoff, toast, openSheet, closeSheet, setScenario, clearScenario, setBuffer, addReminders, renderReminders, openEmailDraft, sendCurrentEmail, esc };
   show('home');
   ['profile:changed', 'learn:changed'].forEach((ev) => window.addEventListener(ev, () => { if (state.tab === 'home') renderHome(); if (state.tab === 'help') renderLearn(); }));
   // rotate the Penny insight banner

@@ -152,7 +152,7 @@
   const WORKING = {
     run_forecast: 'Running the numbers…', plan_savings_goal: 'Building your plan…', get_transactions: 'Looking through your transactions…',
     draft_email: 'Writing your email…', send_email: 'Sending…', show_bill_breakdown: 'Reading your bill…', check_benefits: 'Checking what you could claim…',
-    get_lesson: 'Getting a lesson ready…', start_quiz: 'Getting a quiz ready…', add_reminders: 'Adding reminders…',
+    get_lesson: 'Getting a lesson ready…', show_spending_breakdown: 'Looking at your spending…', talk_to_a_person: 'Finding someone to help…', start_quiz: 'Getting a quiz ready…', add_reminders: 'Adding reminders…',
   };
   function addHistory(role, text) {
     S.turns.push({ role, text });
@@ -194,7 +194,22 @@
     if (S.call) { $('#island').classList.add('active'); }
     else $('#pennyFab').classList.remove('hidden');
   }
-  $('#pennyFab').onclick = () => { openPanel(); if (!S.call) startCall(); };
+  const CONSENT_KEY = 'penny.consent.v1';
+  const hasConsent = () => { try { return localStorage.getItem(CONSENT_KEY) === 'yes'; } catch (e) { return true; } };
+  function withConsent(then) {
+    if (hasConsent()) return then();
+    const s = App.openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Meet Penny</h3><div class="sub">Your AI money assistant</div></div></div>
+      <div class="sum-card consent">
+        <p>🗣️ <b>Talk or type</b> — ask about your balance, spending, bills and plans.</p>
+        <p>🔒 <b>Your data stays with us.</b> Penny uses your account information to answer. Your voice is only used to understand what you say.</p>
+        <p>🧭 <b>Guidance, not advice.</b> Penny explains your options; you make the decisions. She can't move money without you.</p>
+        <p>⚠️ <b>AI can make mistakes.</b> Check anything important — and you can talk to a person any time.</p>
+      </div>
+      <div class="btn-row"><button class="btn ghost" id="cNo">Not now</button><button class="btn primary" id="cYes">Got it</button></div>`);
+    s.querySelector('#cYes').onclick = () => { try { localStorage.setItem(CONSENT_KEY, 'yes'); } catch (e) {} App.closeSheet(); setTimeout(then, 250); };
+    s.querySelector('#cNo').onclick = App.closeSheet;
+  }
+  $('#pennyFab').onclick = () => withConsent(() => { openPanel(); if (!S.call) startCall(); });
   $('#btnMin').onclick = minimisePanel;
   $('#island').onclick = () => { if (S.call) openPanel(); };
   $('#btnText').onclick = () => { $('#pennyPanel').classList.toggle('big'); $('#btnText').classList.toggle('on'); };
@@ -433,7 +448,7 @@
   const TOOL_LABEL = {
     run_forecast: '📈 Updated your forecast preview', clear_forecast_scenario: '↺ Cleared the what-if', get_transactions: '🔎 Checked transactions',
     plan_savings_goal: '🎯 Built a savings plan', set_minimum_buffer: '🛟 Updated your buffer', draft_email: '✉️ Drafted an email for review',
-    send_email: '📤 Sent the email', add_reminders: '✅ Added reminders', show_screen: '📱 Opened a screen', set_language: '🌍 Switched language', show_bill_breakdown: '🧾 Explained your bill', check_benefits: '💷 Checked your benefits', start_quiz: '🎓 Opened a quiz', get_lesson: '📖 Pulled up a lesson', open_penny_settings: '⚙️ Opened settings',
+    send_email: '📤 Sent the email', show_spending_breakdown: '📊 Showed your spending', talk_to_a_person: '🤝 Offered a colleague', add_reminders: '✅ Added reminders', show_screen: '📱 Opened a screen', set_language: '🌍 Switched language', show_bill_breakdown: '🧾 Explained your bill', check_benefits: '💷 Checked your benefits', start_quiz: '🎓 Opened a quiz', get_lesson: '📖 Pulled up a lesson', open_penny_settings: '⚙️ Opened settings',
   };
 
   function runTool(name, input) {
@@ -468,6 +483,11 @@
         if (App.state.tab !== 'home') App.show('home');
         App.toast('Added to Reminders', `${n} new reminder${n === 1 ? '' : 's'} from Penny`, '✅', '#5a287d');
         return { added: n };
+      }
+      case 'show_spending_breakdown': { const d = B.spendingBreakdown(); App.showSpending(d); return { ...d, shownOnScreen: true }; }
+      case 'talk_to_a_person': {
+        const summary = input.summary || S.turns.slice(S.callTurnStart).filter((t) => t.role === 'user').map((t) => t.text).slice(-2).join(' / ');
+        App.showHumanHandoff(input.reason, summary); return { shownOnScreen: true };
       }
       case 'show_screen': App.show(input.screen === 'learn' ? 'help' : input.screen); return { shown: input.screen };
       case 'set_language': {
@@ -670,8 +690,10 @@
     setUserLine('');
     tone('end');
     setPennyLine('Call ended. Tap the green button to talk again.');
-    const hadConversation = S.turns.slice(S.callTurnStart).some((t) => t.role === 'user');
-    if (hadConversation) {
+    const callTurns = S.turns.slice(S.callTurnStart);
+    const userTurns = callTurns.filter((t) => t.role === 'user').length;
+    const meaningful = /forecast|plan|email|reminders|benefits|bill/i.test(callTurns.filter((t) => t.role === 'tool').map((t) => t.text).join(' '));
+    if (userTurns >= 3 || (userTurns >= 1 && meaningful)) {
       minimisePanel();
       showPostCall();
     }
@@ -755,7 +777,7 @@
 
   window.Penny = {
     open: openPanel,
-    openAndAsk: async (q) => { openPanel(); if (!S.call) await startCall({ silent: true }); ask(q); },
+    openAndAsk: (q) => withConsent(async () => { openPanel(); if (!S.call) await startCall({ silent: true }); ask(q); }),
     ask, startCall, endCall, previewVoice, handleUpload, state: S, _renderPostCall: renderPostCall,
   };
 })();

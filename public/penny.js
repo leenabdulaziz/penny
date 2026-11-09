@@ -152,6 +152,9 @@
     const hint = $('#orbHint');
     hint.textContent = m === 'speaking' ? 'Tap to interrupt' : paused ? 'Paused · tap to resume' : S.call && m === 'listening' ? 'Tap to pause' : '';
     hint.classList.toggle('show', !!hint.textContent);
+    clearTimeout(S.hintT); // "Tap to pause" is a gentle reminder, not a permanent label
+    if (S.call && m === 'listening' && !paused) S.hintT = setTimeout(() => hint.classList.remove('show'), 3500);
+    $('#pennyPanel').classList.toggle('busy', m === 'thinking' || m === 'speaking');
     $('#pennyPanel').classList.toggle('paused', paused);
     syncCaption();
   }
@@ -205,8 +208,11 @@
     check_benefits: ['How do I claim the first one?', 'Remind me to apply'],
     get_lesson: ['Quiz me on another topic'], start_quiz: ['Explain it more simply'],
   };
+  // Suggestions: a few starters before the first question, then at most two relevant follow-ups (or none).
   function renderChips(list) {
-    const items = list && list.length ? list : SUGGESTIONS;
+    const asked = S.turns.some((t) => t.role === 'user');
+    const items = list && list.length ? list.slice(0, 2) : asked ? [] : SUGGESTIONS.slice(0, 3);
+    $('#pennyPanel').classList.toggle('no-chips', !items.length);
     $('#chips').innerHTML = items.map((q) => `<button>${esc(q)}</button>`).join('');
     $('#chips').scrollLeft = 0;
     $('#chips').querySelectorAll('button').forEach((b) => (b.onclick = () => ask(b.textContent)));

@@ -530,3 +530,19 @@ button { font-family: inherit; cursor: pointer; }
 .pp-orb-wrap canvas { width: 130px; height: 130px; }
 .orb-hint { position: static; height: 15px; line-height: 15px; font-size: 11px; }
 .subtitles { margin-top: 4px; }
+
+/* ---------- breathing room + calmer type in the call panel ---------- */
+.penny-panel { padding: 8px 18px 14px; }
+.pp-head { margin-bottom: 4px; }
+.pp-orb-wrap { margin-top: 8px; }
+.orb-hint { opacity: 0; transition: opacity .6s; }
+.orb-hint.show { opacity: .85; }
+.subtitles { margin: 10px 0 4px; padding: 0 8px; min-height: 64px; }
+.sub-user { font-size: 13.5px; line-height: 1.45; margin: 0 0 10px; color: #bfa6d8; }
+.sub-penny { font-size: 17px; font-weight: 500; line-height: 1.55; letter-spacing: -.005em; color: #fbf7ff; }
+.penny-panel.big .sub-penny { font-size: 20px; }
+.chips { margin-top: 12px; padding: 0 24px 4px 0; gap: 8px; transition: opacity .25s; }
+.penny-panel.busy .chips, .penny-panel.no-chips .chips { opacity: 0; pointer-events: none; height: 0; padding: 0; margin: 0; overflow: hidden; }
+.pp-controls { padding-top: 18px; }
+.pp-note { margin-top: 10px; }
+.chips { flex-wrap: wrap; justify-content: center; overflow: visible; -webkit-mask-image: none; mask-image: none; padding: 0 0 4px; }

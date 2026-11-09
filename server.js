@@ -198,13 +198,29 @@ const TOOLS = [
   },
 ];
 
-async function createMessage(params) {
-  const req = { model: MODEL, max_tokens: 8000, output_config: { effort: EFFORT, ...(params.output_config || {}) }, ...params };
-  req.output_config = { effort: EFFORT, ...(params.output_config || {}) };
-  if (SUPPORTS_FALLBACK) {
-    return client.beta.messages.create({ ...req, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' });
+// If the model can't verify an earlier reasoning ("thinking") block in the conversation, drop that block
+// instead of failing the whole request. Turned off automatically if the API doesn't accept the setting.
+let dropStaleThinking = SUPPORTS_FALLBACK;
+
+async function createMessage(params, { chat = false } = {}) {
+  const req = { model: MODEL, max_tokens: 8000, ...params, output_config: { effort: EFFORT, ...(params.output_config || {}) } };
+  const betas = [];
+  if (SUPPORTS_FALLBACK) { betas.push('server-side-fallback-2026-07-01'); req.fallbacks = 'default'; }
+  if (chat && dropStaleThinking) {
+    betas.push('thinking-binding-controls-2026-08-01');
+    req.thinking = { type: 'adaptive', block_binding: { prefix_mismatch_behavior: 'drop_block' } };
   }
-  return client.messages.create(req);
+  if (!betas.length) return client.messages.create(req);
+  try {
+    return await client.beta.messages.create({ ...req, betas });
+  } catch (err) {
+    if (req.thinking && err?.status === 400 && /block_binding|thinking-binding|prefix_mismatch/i.test(err.message || '')) {
+      console.warn('[api] drop_block setting not accepted; continuing without it');
+      dropStaleThinking = false;
+      return createMessage(params, { chat });
+    }
+    throw err;
+  }
 }
 
 async function handleChat(body) {
@@ -213,7 +229,7 @@ async function handleChat(body) {
     { type: 'text', text: PERSONA, cache_control: { type: 'ephemeral' } },
     { type: 'text', text: `Live account snapshot (JSON, amounts in GBP; negative = money out):\n${JSON.stringify(context)}` },
   ];
-  const res = await createMessage({ system, tools: TOOLS, messages });
+  const res = await createMessage({ system, tools: TOOLS, messages }, { chat: true });
   if (res.stop_reason === 'refusal') {
     return { content: res.content, stop_reason: 'refusal', text: "Sorry, I can't help with that one. Is there anything about your money I can look at?" };
   }

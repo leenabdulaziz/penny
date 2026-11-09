@@ -1,7 +1,7 @@
 /* Penny: voice assistant — orb, speech in/out, Claude conversation with tools, post-call action cards. */
 (function () {
   const B = window.Bank, App = window.App;
-  const $ = (s) => document.querySelector(s);
+  const $ = (s) => document.querySelector(s) || document.createElement('div'); // missing optional elements become no-ops
   const esc = App.esc;
 
   const PS = () => window.PennySettings;

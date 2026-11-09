@@ -5,7 +5,10 @@
 (function () {
   const DAY = 86400000;
   const sod = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-  const TODAY = sod(new Date());
+  // The demo story (e.g. £1,250 balance, ~£1,000 reserved, £250 free before payday) is tuned to this date,
+  // so the numbers are identical every time you present. Add ?today=real to the URL to use the real date.
+  const DEMO_DATE = new Date(2026, 10, 7);
+  const TODAY = sod(/[?&]today=real/.test((typeof location !== 'undefined' && location.search) || '') ? new Date() : DEMO_DATE);
   const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
   const diffDays = (a, b) => Math.round((sod(b) - sod(a)) / DAY);
   const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

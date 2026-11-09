@@ -121,16 +121,16 @@
       <div class="sub">Make Penny yours — she adapts to who you are and how you like to talk.</div>
 
       <div class="set-sec"><h4>Who's using the app?</h4>
-        <div class="persona-row">${Object.entries(P.PRESETS).map(([id, pr]) => `<button class="persona ${p.presetId === id ? 'on' : ''}" data-preset="${id}"><span>${pr.emoji}</span>${esc(pr.label)}</button>`).join('')}</div>
+        <div class="persona-row">${Object.entries(P.PRESETS).map(([id, pr]) => `<button class="persona ${p.presetId === id ? 'on' : ''}" data-preset="${id}"><span class="p-av">${esc(pr.name[0])}</span>${esc(pr.label)}</button>`).join('')}</div>
         <small class="hint">Demo people — Penny changes her tone, pace and advice for each.</small>
       </div>
 
-      <div class="set-sec"><h4>🌍 Language</h4>
+      <div class="set-sec"><h4>${Ic('globe', 17)} Language</h4>
         <select id="setLang">${LANGS.map((x) => `<option value="${x.code}" ${x.code === l.code ? 'selected' : ''}>${x.native} — ${x.name}</option>`).join('')}</select>
         ${state.ttsMode !== 'elevenlabs' && !list.length ? `<div class="warn-note">No ${esc(l.name)} voice is installed on this computer, so Penny can't speak it aloud yet. On a Mac: System Settings → Accessibility → Spoken Content → System voice → Manage Voices → add a ${esc(l.name)} voice, then reload. Subtitles still work.</div>` : ''}
       </div>
 
-      <div class="set-sec"><h4>🗣️ Voice</h4>
+      <div class="set-sec"><h4>${Ic('voice', 17)} Voice</h4>
         <div class="seg2"><button data-g="f" class="${state.gender === 'f' ? 'on' : ''}">Female</button><button data-g="m" class="${state.gender === 'm' ? 'on' : ''}">Male</button></div>
         <select id="setVoice">${voiceOpts}</select>
         ${state.ttsMode !== 'elevenlabs' && list.length && !list.some((v) => genderOf(v.name) === state.gender) ? `<div class="warn-note">No ${state.gender === 'm' ? 'male' : 'female'} ${esc(l.name)} voice found here, so Penny uses the closest available.</div>` : ''}
@@ -139,13 +139,13 @@
         <button class="btn ghost small" id="setPreview">▶ Preview voice</button>
       </div>
 
-      <div class="set-sec"><h4>✨ Personality</h4>
+      <div class="set-sec"><h4>${Ic('sparkles', 17)} Personality</h4>
         <textarea id="setPers" rows="3" placeholder="Describe how you want Penny to be… e.g. 'like a supportive big sister who keeps it real'">${esc(state.personality)}</textarea>
         <div class="chip-row">${PERSONALITY_CHIPS.map((c) => `<button class="chip" data-pers="${esc(c)}">${esc(c)}</button>`).join('')}</div>
         <small class="hint">Penny stays respectful and only talks about money, whatever personality you pick.</small>
       </div>
 
-      <details class="set-sec" id="aboutSec" ${section === 'about' ? 'open' : ''}><summary><h4>🙋 About you</h4><span class="hint">Used to personalise advice and check benefits</span></summary>
+      <details class="set-sec" id="aboutSec" ${section === 'about' ? 'open' : ''}><summary><h4>${Ic('user', 17)} About you</h4><span class="hint">Used to personalise advice and check benefits</span></summary>
         <form id="profForm" class="prof-grid">
           <label>Name<input name="name" value="${esc(p.name)}"></label>
           <label>Age<input name="age" type="number" min="13" max="110" value="${p.age}"></label>
@@ -173,11 +173,11 @@
         </form>
       </details>
 
-      <button class="cta" id="setBenefits"><span class="cta-ic">💷</span><span>Check what I'm entitled to<small>Benefits, discounts and bonuses people often miss</small></span><span class="chev">›</span></button>
+      <button class="cta" id="setBenefits"><span class="cta-ic">${Ic('banknote', 20)}</span><span>Check what I'm entitled to<small>Benefits, discounts and bonuses people often miss</small></span><span class="chev">›</span></button>
       <div class="btn-row"><button class="btn primary" id="setSave">Save</button></div>`);
 
     const reopen = (sec) => { readProfile(); open(sec); };
-    s.querySelectorAll('[data-preset]').forEach((b) => (b.onclick = () => { P.usePreset(b.dataset.preset); App.toast(`Hi ${P.get().name}!`, 'Penny will adapt to you', P.PRESETS[b.dataset.preset].emoji, '#5a287d'); open(); }));
+    s.querySelectorAll('[data-preset]').forEach((b) => (b.onclick = () => { P.usePreset(b.dataset.preset); App.toast(`Hi ${P.get().name}!`, 'Penny will adapt to you', 'user', '#5a287d'); open(); }));
     s.querySelector('#setLang').onchange = (e) => { readProfile(); setLang(e.target.value); open(); };
     s.querySelectorAll('[data-g]').forEach((b) => (b.onclick = () => { state.gender = b.dataset.g; state.voiceName = ''; state.elevenVoice = (ELEVEN_VOICES.find((v) => v.g === state.gender) || ELEVEN_VOICES[0]).id; save(); reopen(s.querySelector('#aboutSec').open ? 'about' : ''); }));
     s.querySelector('#setVoice').onchange = (e) => { if (state.ttsMode === 'elevenlabs') state.elevenVoice = e.target.value; else state.voiceName = e.target.value; save(); };
@@ -187,7 +187,7 @@
     s.querySelectorAll('[data-pers]').forEach((b) => (b.onclick = () => { const t = s.querySelector('#setPers'); t.value = t.value ? `${t.value.replace(/[.\s]+$/, '')}, ${b.dataset.pers.toLowerCase()}` : b.dataset.pers; state.personality = t.value; save(); }));
     s.querySelector('#setPers').oninput = (e) => { state.personality = e.target.value; save(); };
     s.querySelector('#setBenefits').onclick = () => { readProfile(); showBenefits(P.benefits()); };
-    s.querySelector('#setSave').onclick = () => { readProfile(); App.closeSheet(); App.toast('Penny updated', `${lang().native} · ${STYLES[state.style].label}${state.personality ? ' · custom personality' : ''}`, '✨', '#5a287d'); };
+    s.querySelector('#setSave').onclick = () => { readProfile(); App.closeSheet(); App.toast('Penny updated', `${lang().native} · ${STYLES[state.style].label}${state.personality ? ' · custom personality' : ''}`, 'sparkles', '#5a287d'); };
 
     function readProfile() {
       const f = s.querySelector('#profForm');
@@ -217,7 +217,7 @@
         <div class="ben-why">${esc(b.why)}</div>
         <a class="src-link" href="${b.url}" target="_blank" rel="noopener">${esc(b.how)} ↗</a></div>`).join('') : '<div class="sum-card">Nothing obvious from what you\'ve told me — but a full check can still find things.</div>'}
       <div class="ben-note">${esc(r.context)} ${esc(r.note)}</div>
-      <div class="btn-row"><button class="btn ghost" id="benEdit">Edit my details</button><button class="btn primary" id="benAsk">🎙️ Talk it through</button></div>`);
+      <div class="btn-row"><button class="btn ghost" id="benEdit">Edit my details</button><button class="btn primary" id="benAsk">${Ic('mic', 16)} Talk it through</button></div>`);
     s.querySelector('#benEdit').onclick = () => open('about');
     s.querySelector('#benAsk').onclick = () => { App.closeSheet(); window.Penny && window.Penny.openAndAsk('Can you explain which benefits I might be entitled to and how to claim them?'); };
   }

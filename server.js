@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
+import { Readable } from 'node:stream';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,7 @@ const MODEL = process.env.PENNY_MODEL || 'claude-opus-5-5';
 const EFFORT = process.env.PENNY_EFFORT || 'low';
 const ELEVEN_KEY = process.env.ELEVENLABS_API_KEY || '';
 const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID || 'pFZP5JQG7iQjIQuC4Bku';
+const ELEVEN_MODEL = process.env.ELEVENLABS_MODEL || 'eleven_flash_v2_5'; // fastest, multilingual
 // Server-side refusal fallback (routes a declined request to another model inside the same call).
 const SUPPORTS_FALLBACK = ['claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5', 'claude-fable-5-1'].includes(MODEL);
 
@@ -254,16 +256,26 @@ async function handleChat(body) {
   return { content: res.content, stop_reason: res.stop_reason };
 }
 
+// Streams ElevenLabs audio straight to the browser so Penny starts talking within a fraction of a second.
 async function handleTTS({ text, voice_id, language }, res) {
   const voice = /^[A-Za-z0-9]{10,40}$/.test(voice_id || '') ? voice_id : ELEVEN_VOICE;
-  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_44100_128`, {
+  text = String(text || '').slice(0, 2500);
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}/stream?output_format=mp3_44100_128`, {
     method: 'POST',
     headers: { 'xi-api-key': ELEVEN_KEY, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-    body: JSON.stringify({ text, model_id: 'eleven_turbo_v2_5', ...(language && /^[a-z]{2}$/.test(language) && language !== 'en' ? { language_code: language } : {}), voice_settings: { stability: 0.45, similarity_boost: 0.8 } }),
+    body: JSON.stringify({
+      text, model_id: ELEVEN_MODEL,
+      ...(language && /^[a-z]{2}$/.test(language) && language !== 'en' ? { language_code: language } : {}),
+      voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true },
+    }),
   });
-  if (!r.ok) { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: `TTS ${r.status}` })); return; }
-  res.writeHead(200, { 'Content-Type': 'audio/mpeg' });
-  res.end(Buffer.from(await r.arrayBuffer()));
+  if (!r.ok || !r.body) {
+    const detail = await r.text().catch(() => '');
+    console.error('[tts]', r.status, detail.slice(0, 300));
+    res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: `TTS ${r.status}` })); return;
+  }
+  res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' });
+  Readable.fromWeb(r.body).pipe(res);
 }
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
@@ -299,6 +311,10 @@ const server = http.createServer(async (req, res) => {
       const out = await handleChat(await readJSON(req));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify(out));
+    }
+    if (req.method === 'GET' && url.pathname === '/api/tts') {
+      if (!ELEVEN_KEY) { res.writeHead(404); return res.end(); }
+      return await handleTTS({ text: url.searchParams.get('text'), voice_id: url.searchParams.get('voice'), language: url.searchParams.get('lang') }, res);
     }
     if (req.method === 'POST' && url.pathname === '/api/tts') {
       if (!ELEVEN_KEY) { res.writeHead(404); return res.end(); }

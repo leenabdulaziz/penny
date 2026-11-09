@@ -32,7 +32,8 @@
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
     brief: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2"/></svg>',
   };
-  const CAT_EMOJI = { Groceries: '🛒', Transport: '🚇', 'Eating out': '🍽️', Takeaways: '🥡', Shopping: '🛍️', Entertainment: '🎟️', Taxis: '🚕', Bills: '💡', Subscriptions: '🔁', Rent: '🏠', Income: '💷', 'Card repayment': '💳' };
+  const CAT_ICON = { Groceries: 'cart', Transport: 'train', 'Eating out': 'utensils', Takeaways: 'package', Shopping: 'bag', Entertainment: 'ticket', Taxis: 'car', Bills: 'zap', Subscriptions: 'repeat', Rent: 'home', Income: 'income', 'Card repayment': 'card' };
+  const catIc = (c, size = 18) => Ic(CAT_ICON[c] || 'wallet', size);
 
   // ---------- HOME ----------
   function renderHome() {
@@ -41,7 +42,7 @@
     const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     const alerts = B.spendingAlerts();
     const group = window.Profile ? window.Profile.ageGroup() : 'adult';
-    const lead = { teen: `Heads up ${B.customer.firstName} 👀`, older: `${B.customer.firstName}, a gentle heads-up`, adult: `${B.customer.firstName}`, 'young-adult': `${B.customer.firstName}` }[group];
+    const lead = { teen: `Heads up ${B.customer.firstName}`, older: `${B.customer.firstName}, a gentle heads-up`, adult: `${B.customer.firstName}`, 'young-adult': `${B.customer.firstName}` }[group];
     $('#view-home').innerHTML = `
       <div class="topbar">
         <div class="avatar">${B.customer.initials}</div>
@@ -51,7 +52,7 @@
       <div class="greet">${greet}, ${B.customer.firstName}<small>${B.fmtDate(B.TODAY)}</small></div>
       <div class="insight-banner" id="insightBanner">
         <div class="ib-orb"></div>
-        <div class="ib-slides">${alerts.slice(0, 3).map((a, i) => `<p class="ib-slide ${i ? '' : 'on'}" data-ask="${esc(a.ask)}"><b>${a.icon} ${esc(lead)}, ${esc(a.title)}.</b><br><span>${esc(a.detail)}</span> <u>Talk to Penny</u></p>`).join('')}</div>
+        <div class="ib-slides">${alerts.slice(0, 3).map((a, i) => `<p class="ib-slide ${i ? '' : 'on'}" data-ask="${esc(a.ask)}"><b><span class="ib-ic">${Ic(a.icon, 15)}</span>${esc(lead)}, ${esc(a.title)}.</b><br><span>${esc(a.detail)}</span> <u>Talk to Penny</u></p>`).join('')}</div>
         <div class="ib-dots">${alerts.slice(0, 3).map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>
       </div>
       <div class="section-h"><span>Accounts</span><a href="#">Edit ›</a></div>
@@ -70,19 +71,19 @@
       <div class="card forecast" id="forecastCard"></div>
       <div class="card reminders" id="remindersCard"></div>
       <div class="widgets">
-        <div class="card tappable" id="learnWidget"><h6>Money skills</h6><div style="font-size:24px;margin:2px 0 4px">🎓</div><b style="font-size:15px">${window.Learn ? window.Learn.doneCount() : 0}/${window.Learn ? window.Learn.TOPICS.length : 8} topics</b><div class="muted">${window.Learn ? window.Learn.xp() : 0} XP · Quiz yourself</div></div>
-        <div class="card tappable" id="benefitWidget"><h6>Benefits check</h6><div style="font-size:24px;margin:2px 0 4px">💷</div><b style="font-size:15px">${window.Profile ? '£' + window.Profile.benefits().estimatedAnnualValueLikely.toLocaleString('en-GB') : '—'}</b><div class="muted">a year you may be missing</div></div>
+        <div class="card tappable" id="learnWidget"><h6>Money skills</h6><div class="w-ic">${Ic('graduation', 22)}</div><b style="font-size:15px">${window.Learn ? window.Learn.doneCount() : 0}/${window.Learn ? window.Learn.TOPICS.length : 8} topics</b><div class="muted">${window.Learn ? window.Learn.xp() : 0} XP · Quiz yourself</div></div>
+        <div class="card tappable" id="benefitWidget"><h6>Benefits check</h6><div class="w-ic">${Ic('banknote', 22)}</div><b style="font-size:15px">${window.Profile ? '£' + window.Profile.benefits().estimatedAnnualValueLikely.toLocaleString('en-GB') : '—'}</b><div class="muted">a year you may be missing</div></div>
       </div>
       <div class="widgets">
         <div class="card"><h6>Credit score</h6>
           <svg class="gauge" viewBox="0 0 64 40"><path d="M6 36a26 26 0 0 1 52 0" fill="none" stroke="#e9e3f1" stroke-width="7" stroke-linecap="round"/><path d="M6 36a26 26 0 0 1 40-22" fill="none" stroke="#7d3fc0" stroke-width="7" stroke-linecap="round"/><path d="M32 36l12-14" stroke="#3c1053" stroke-width="2.5" stroke-linecap="round"/></svg>
           <div>Track your credit score</div></div>
-        <div class="card"><h6>Round Ups</h6><div style="font-size:24px;margin:2px 0 4px">🐷</div><b style="font-size:15px">£50.00</b><div class="muted">Saved this month</div></div>
+        <div class="card"><h6>Round Ups</h6><div class="w-ic">${Ic('piggy', 22)}</div><b style="font-size:15px">£50.00</b><div class="muted">Saved this month</div></div>
       </div>
       <div class="card"><div class="muted" style="text-align:center;margin-bottom:8px">Favourite payees</div>
         <div class="payees"><div class="payee"><b>SS</b>Sarah Smith</div><div class="payee"><b>AY</b>Amy Young</div><div class="payee"><b>JJ</b>Jared Johnson</div></div></div>
       <div class="card"><div class="muted" style="text-align:center;margin-bottom:8px">Shortcuts</div>
-        <div class="shortcut"><div class="sc-ic">⇄</div><div><b style="font-weight:600">Transfer money</b><div class="muted">From Current to Saver</div></div><span style="margin-left:auto;color:var(--purple)">›</span></div></div>
+        <div class="shortcut"><div class="sc-ic">${Ic('swap', 18)}</div><div><b style="font-weight:600">Transfer money</b><div class="muted">From Current to Saver</div></div><span style="margin-left:auto;color:var(--purple)">›</span></div></div>
       <div style="height:40px"></div>`;
     $('#insightBanner').onclick = () => { const on = $('#insightBanner .ib-slide.on'); window.Penny && window.Penny.openAndAsk(on ? on.dataset.ask : 'How am I doing?'); };
     $('.topbar .avatar').onclick = () => window.PennySettings && window.PennySettings.open();
@@ -112,7 +113,7 @@
         <div><h4>Future balance</h4><div class="muted">Lowest before payday</div><div class="big ${cls}">${B.gbp(f.lowestBeforePayday)}</div></div>
         <div class="right"><div class="muted">Payday</div><b style="font-size:13.5px">${B.fmtDate(new Date(f.assumedPayday))}</b><div class="muted" style="margin-top:4px">Today ${B.gbp(B.accounts.current.balance)}</div></div>
       </div>
-      <div class="fc-chip ${sc ? 'on' : ''}"><span>🔮 <b>What if:</b> ${esc(state.scenario?.label || 'Scenario')}<br><small>Preview only · your actual balance hasn't changed</small></span><button id="fcClear">Clear</button></div>
+      <div class="fc-chip ${sc ? 'on' : ''}"><span><span class="chip-ic">${Ic('sparkles', 14)}</span><b>What if:</b> ${esc(state.scenario?.label || 'Scenario')}<br><small>Preview only · your actual balance hasn't changed</small></span><button id="fcClear">Clear</button></div>
       ${chartSVG(base, sc)}
       <div class="fc-legend"><span><i style="background:#5a287d"></i>Expected</span>${sc ? '<span><i style="background:#d6327e"></i>What if</span>' : ''}<span><i style="background:#e4d7f1;height:8px"></i>Likely range</span><span><i style="background:#c4314b"></i>Buffer ${B.gbp0(f.buffer)}</span></div>
       <div class="fc-verdict ${verdict[0]}">${verdict[1]}</div>
@@ -146,7 +147,7 @@
       <path d="${band}" fill="#e4d7f1" opacity=".75"/>
       <line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="#b9aec4" stroke-width="1"/>
       <line x1="0" x2="${W}" y1="${y(main.buffer)}" y2="${y(main.buffer)}" stroke="#c4314b" stroke-width="1" stroke-dasharray="4 3"/>
-      ${pdIdx > 0 ? `<line x1="${x(pdIdx)}" x2="${x(pdIdx)}" y1="${padT - 6}" y2="${H - padB}" stroke="#5a287d" stroke-width="1" stroke-dasharray="2 3"/><text x="${x(pdIdx) + 3}" y="${padT - 3}" font-size="9" fill="#5a287d" font-weight="600">Payday 💷</text>` : ''}
+      ${pdIdx > 0 ? `<line x1="${x(pdIdx)}" x2="${x(pdIdx)}" y1="${padT - 6}" y2="${H - padB}" stroke="#5a287d" stroke-width="1" stroke-dasharray="2 3"/><text x="${x(pdIdx) + 3}" y="${padT - 3}" font-size="9" fill="#5a287d" font-weight="600">Payday</text>` : ''}
       <path d="${line(base.series, 'balance')}L${x(n)},${H - padB}L${x(0)},${H - padB}Z" fill="url(#fg)" opacity="${sc ? 0.4 : 1}"/>
       <path d="${line(base.series, 'balance')}" fill="none" stroke="#5a287d" stroke-width="2" opacity="${sc ? 0.45 : 1}"/>
       ${sc ? `<path d="${line(sc.series, 'balance')}" fill="none" stroke="#d6327e" stroke-width="2.4" stroke-dasharray="5 3"/>` : ''}
@@ -179,7 +180,7 @@
     const el = $('#remindersCard');
     if (!el) return;
     const open = state.reminders.filter((r) => !r.done).length;
-    el.innerHTML = `<h4><span>✅ Reminders</span><span class="muted">${open} open</span></h4>` +
+    el.innerHTML = `<h4><span class="h-ic">${Ic('check-square', 18)} Reminders</span><span class="muted">${open} open</span></h4>` +
       (state.reminders.length ? state.reminders.map((r) => `<label class="rem ${r.done ? 'done' : ''} ${newIds.includes(r.id) ? 'new' : ''}"><input type="checkbox" data-id="${r.id}" ${r.done ? 'checked' : ''}/><span>${esc(r.title)}<small>${esc(r.due || '')}${r.source ? ' · from Penny' : ''}</small></span></label>`).join('') : '<div class="empty">No reminders yet.</div>');
     el.querySelectorAll('input').forEach((i) => (i.onchange = () => { const r = state.reminders.find((x) => x.id === +i.dataset.id); r.done = i.checked; renderReminders(); }));
   }
@@ -219,7 +220,7 @@
       <div class="section-h"><span>Spending averages explained ⓘ</span></div>
       <div class="card avgs"><div>Daily<b>${B.gbp(monthlyAvg / 30.4)}</b></div><div>Weekly<b>${B.gbp(monthlyAvg / 4.35)}</b></div><div>Monthly<b>${B.gbp(monthlyAvg)}</b></div></div>
       <div class="section-h"><span>This pay cycle by category</span></div>
-      <div class="card">${cats.map(([c, v]) => `<div class="cat-row"><span>${CAT_EMOJI[c] || '•'} ${c}</span><b class="amt">${B.gbp(v)}</b><div class="track"><span style="width:${(v / cmax) * 100}%"></span></div></div>`).join('')}</div>`;
+      <div class="card">${cats.map(([c, v]) => `<div class="cat-row"><span>${catIc(c)} ${c}</span><b class="amt">${B.gbp(v)}</b><div class="track"><span style="width:${(v / cmax) * 100}%"></span></div></div>`).join('')}</div>`;
     $('[data-back]', $('#view-insights')).onclick = () => show('home');
     $('.tabs2 button', $('#view-insights')).onclick = () => show('transactions');
   }
@@ -233,7 +234,7 @@
       <div class="navbar"><button data-back>‹</button><h2>My transactions</h2><span style="width:30px;color:var(--purple);font-weight:800">•••</span></div>
       <div class="tabs2"><button class="on">Transactions</button><button>Spending</button></div>
       ${Object.entries(groups).map(([d, ts]) => `<div class="tx-date">${B.iso(B.TODAY) === d ? 'Today' : B.fmtDate(new Date(d))}</div>` +
-        ts.map((t) => `<div class="tx"><div class="tx-l"><div class="tx-ic">${CAT_EMOJI[t.cat] || '•'}</div><div>${esc(t.merchant)}<small>${esc(t.note || t.cat)}</small></div></div><div class="amt ${t.amount > 0 ? 'in' : ''}">${t.amount > 0 ? '+' : ''}${B.gbp(t.amount)}</div></div>`).join('')).join('')}`;
+        ts.map((t) => `<div class="tx"><div class="tx-l"><div class="tx-ic">${catIc(t.cat)}</div><div>${esc(t.merchant)}<small>${esc(t.note || t.cat)}</small></div></div><div class="amt ${t.amount > 0 ? 'in' : ''}">${t.amount > 0 ? '+' : ''}${B.gbp(t.amount)}</div></div>`).join('')).join('')}`;
     $('[data-back]', $('#view-transactions')).onclick = () => show('home');
     $('.tabs2 button:last-child', $('#view-transactions')).onclick = () => show('insights');
   }
@@ -245,7 +246,7 @@
     $('#view-payments').innerHTML = `
       <div class="navbar"><span style="width:30px"></span><h2>Payments</h2><span style="width:30px"></span></div>
       <div class="section-h"><span>Upcoming direct debits & subscriptions</span></div>
-      <div class="card" style="padding:4px 0">${list.map((b) => `<div class="tx" style="border-radius:0"><div class="tx-l"><div class="tx-ic">${CAT_EMOJI[b.cat] || '•'}</div><div>${esc(b.name)}<small>${B.fmtDate(b.next)}${b.next < np ? ' · before payday' : ''}${b.history ? ' · <b style="color:var(--red)">price rise</b>' : ''}</small></div></div><div class="amt">${B.gbp(-b.amount)}</div></div>`).join('')}</div>
+      <div class="card" style="padding:4px 0">${list.map((b) => `<div class="tx" style="border-radius:0"><div class="tx-l"><div class="tx-ic">${catIc(b.cat)}</div><div>${esc(b.name)}<small>${B.fmtDate(b.next)}${b.next < np ? ' · before payday' : ''}${b.history ? ' · <b style="color:var(--red)">price rise</b>' : ''}</small></div></div><div class="amt">${B.gbp(-b.amount)}</div></div>`).join('')}</div>
       <div class="section-h"><span>Emails sent with Penny</span></div>
       <div class="card" id="sentList">${state.sentEmails.length ? state.sentEmails.map((e) => `<div style="padding:6px 0;font-size:13.5px"><b>${esc(e.subject)}</b><span class="sent-badge">Sent</span><div class="muted">To ${esc(e.to)} · ${e.at}</div></div>`).join('') : '<div class="muted">Nothing yet.</div>'}</div>`;
   }
@@ -269,12 +270,12 @@
       <div class="bill-key">${d.total_due ? `<div><small>${esc(d.labels?.total || 'Total to pay')}</small><b>${esc(d.total_due)}</b></div>` : ''}${d.due_date ? `<div><small>${esc(d.labels?.due || 'Due')}</small><b>${esc(d.due_date)}</b></div>` : ''}</div>
       ${d.summary ? `<div class="sum-card">${esc(d.summary)}</div>` : ''}
       ${(d.items || []).length ? `<div class="sum-card bill-items">${d.items.map((i) => `<div class="bill-item"><div class="bi-top"><b>${esc(i.label)}</b><span class="amt">${esc(i.amount || '')}</span></div><div class="muted">${esc(i.explanation || '')}</div></div>`).join('')}</div>` : ''}
-      ${(d.watch_out || []).length ? `<div class="warn-note">⚠️ ${d.watch_out.map(esc).join('<br>⚠️ ')}</div>` : ''}
+      ${(d.watch_out || []).length ? `<div class="warn-note">${d.watch_out.map((w) => `<div class="wn-row">${Ic('alert', 15)}<span>${esc(w)}</span></div>`).join('')}</div>` : ''}
       ${(d.actions || []).length ? `<div class="sum-card"><b>${esc(d.labels?.actions || 'What you can do')}</b><ul>${d.actions.map((a) => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
       </div>
       <div class="btn-row"><button class="btn ghost" id="billRem">Remind me to pay</button><button class="btn primary" id="billDone">Got it</button></div>`);
     s.querySelector('#billDone').onclick = closeSheet;
-    s.querySelector('#billRem').onclick = () => { addReminders([{ title: `Pay ${d.issuer || 'bill'}${d.total_due ? ' — ' + d.total_due : ''}`, due: d.due_date || '' }]); toast('Reminder added', d.issuer || 'Bill', '✅', '#5a287d'); closeSheet(); };
+    s.querySelector('#billRem').onclick = () => { addReminders([{ title: `Pay ${d.issuer || 'bill'}${d.total_due ? ' — ' + d.total_due : ''}`, due: d.due_date || '' }]); toast('Reminder added', d.issuer || 'Bill', 'check-square', '#5a287d'); closeSheet(); };
   }
 
   // ---------- spending card ----------
@@ -284,7 +285,7 @@
       <div class="bill-key"><div><small>Balance now</small><b>${B.gbp(d.currentBalance)}</b></div><div><small>Everyday spending</small><b>${B.gbp(d.everydayTotal)}</b></div></div>
       <div class="sum-card">${d.categories.slice(0, 6).map((c) => {
         const over = c.usualByNow > 5 && c.spent > c.usualByNow * 1.25;
-        return `<div class="sp-row"><div class="bi-top"><span>${CAT_EMOJI[c.category] || '•'} ${esc(c.category)}</span><b class="amt" ${over ? 'style="color:var(--red)"' : ''}>${B.gbp(c.spent)}</b></div>
+        return `<div class="sp-row"><div class="bi-top"><span>${catIc(c.category)} ${esc(c.category)}</span><b class="amt" ${over ? 'style="color:var(--red)"' : ''}>${B.gbp(c.spent)}</b></div>
           <div class="sp-track"><span style="width:${(c.spent / max) * 100}%" class="${over ? 'over' : ''}"></span>${c.usualByNow ? `<i style="left:${(c.usualByNow / max) * 100}%" title="Usual by now"></i>` : ''}</div>
           <div class="muted">${c.topMerchant ? `Mostly ${esc(c.topMerchant.name)} (${B.gbp(c.topMerchant.amount)})` : ''}${c.usualByNow ? ` · usually ~${B.gbp0(c.usualByNow)} by now` : ''}</div></div>`;
       }).join('')}</div>
@@ -298,13 +299,13 @@
   function showHumanHandoff(reason, summary) {
     const s = openSheet(`<div class="sum-head"><div class="ib-orb" style="background:radial-gradient(circle at 35% 30%,#fff,#bfe9d1 30%,#1f8a4c 70%)"></div><div><h3>Talk to a person</h3><div class="sub">${esc(reason || 'Our team is here to help')}</div></div></div>
       ${summary ? `<div class="sum-card"><b>Penny will pass this on</b><div class="muted" style="margin-top:4px">${esc(summary)}</div><small class="hint">So you don't have to repeat yourself.</small></div>` : ''}
-      <button class="cta" data-h="chat"><span class="cta-ic">💬</span><span>Chat with a colleague<small>Usually replies in a few minutes</small></span><span class="chev">›</span></button>
-      <button class="cta" data-h="call"><span class="cta-ic">📞</span><span>Request a call back<small>We'll call you within the hour</small></span><span class="chev">›</span></button>
-      <button class="cta" data-h="fraud"><span class="cta-ic">🛡️</span><span>Report fraud or a scam<small>24/7 — call 159 if you think it's happening now</small></span><span class="chev">›</span></button>
+      <button class="cta" data-h="chat"><span class="cta-ic">${Ic('message', 20)}</span><span>Chat with a colleague<small>Usually replies in a few minutes</small></span><span class="chev">›</span></button>
+      <button class="cta" data-h="call"><span class="cta-ic">${Ic('phone', 20)}</span><span>Request a call back<small>We'll call you within the hour</small></span><span class="chev">›</span></button>
+      <button class="cta" data-h="fraud"><span class="cta-ic">${Ic('shield', 20)}</span><span>Report fraud or a scam<small>24/7 — call 159 if you think it's happening now</small></span><span class="chev">›</span></button>
       <div class="btn-row"><button class="btn ghost" id="hhClose">Not now</button></div>`);
     s.querySelectorAll('[data-h]').forEach((b) => (b.onclick = () => {
       const m = { chat: ['Connecting you…', 'A colleague will join this chat shortly'], call: ['Call back requested', "We'll call your registered number"], fraud: ['Fraud team notified', "We'll call you shortly. You can freeze your card in Card settings."] }[b.dataset.h];
-      closeSheet(); toast(m[0], m[1], '🤝', '#1f8a4c');
+      closeSheet(); toast(m[0], m[1], 'users', '#1f8a4c');
     }));
     s.querySelector('#hhClose').onclick = closeSheet;
   }
@@ -315,7 +316,7 @@
     const s = openSheet(`<div class="sum-head"><div class="ib-orb"></div><div><h3>Plan: ${esc(pl.label)}</h3><div class="sub">Goal ${B.gbp0(pl.goal)} by ${B.fmtDate(target)}</div></div></div>
       <div class="bill-key"><div><small>Each month</small><b>${B.gbp(pl.perMonth)}</b></div><div><small>Each week</small><b>${B.gbp(pl.perWeek)}</b></div></div>
       <div class="sum-card"><b>Where it could come from</b>${pl.ideas.map((i) => `<div class="bill-item"><div class="bi-top"><span>${esc(i.idea)}</span><b class="amt" style="color:var(--green)">+${B.gbp(i.saves)}/mo</b></div><div class="muted">${esc(i.basis)}</div></div>`).join('')}
-      <div class="bill-item"><div class="bi-top"><b>Total from these ideas</b><b class="amt">${B.gbp(pl.ideasTotalPerMonth)}/mo</b></div><div class="muted">${pl.coversGoal ? '✅ Enough to hit your goal on time' : `About ${B.gbp(Math.max(0, pl.perMonth - pl.ideasTotalPerMonth))}/mo short — a longer timeline would close the gap`}</div></div></div>
+      <div class="bill-item"><div class="bi-top"><b>Total from these ideas</b><b class="amt">${B.gbp(pl.ideasTotalPerMonth)}/mo</b></div><div class="muted">${pl.coversGoal ? 'Enough to hit your goal on time' : `About ${B.gbp(Math.max(0, pl.perMonth - pl.ideasTotalPerMonth))}/mo short — a longer timeline would close the gap`}</div></div></div>
       <div class="ben-note">Free to spend above your buffer before payday: ${B.gbp(Math.max(0, pl.freeToSpendThisCycle))}. Nothing has been moved — this is a plan.</div>
       <div class="btn-row"><button class="btn primary" id="planOk">Looks good</button></div>`);
     s.querySelector('#planOk').onclick = closeSheet;
@@ -341,7 +342,7 @@
   function toast(title, body, icon = '✓', color) {
     $('#toastTitle').textContent = title;
     $('#toastBody').textContent = body || '';
-    const ic = $('.toast-icon'); ic.textContent = icon; ic.style.background = color || '';
+    const ic = $('.toast-icon'); ic.innerHTML = Ic(icon, 18); ic.style.background = color || '';
     const el = $('#toast');
     el.classList.add('show');
     clearTimeout(toastT);
@@ -369,7 +370,7 @@
     state.email = { to: d.recipient_email || '', name: d.recipient_name || '', subject: d.subject || '', body: d.body || '', sent: false };
     const s = openSheet(`
       <h3>Review email</h3>
-      <div class="email-note">✨ Penny drafted this from your account data. Edit anything before sending.</div>
+      <div class="email-note">${Ic('sparkles', 16)} Penny drafted this from your account data. Edit anything before sending.</div>
       <div class="email">
         <div class="f"><label>To</label><input id="emTo" value="${esc(state.email.name)}${state.email.to ? ' <' + esc(state.email.to) + '>' : ''}"/></div>
         <div class="f"><label>From</label><span style="color:var(--ink-2)">${esc(B.customer.email)}</span></div>

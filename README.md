@@ -45,6 +45,13 @@ Claude also gets a live JSON snapshot of the account. It includes balances, bill
 - **Money skills**: 8 lessons with quizzes based on NatWest guides, with XP. Penny can also quiz you out loud.
 - **Personal banner**: shows rotating "Penny noticed" spending alerts worked out from your data.
 
+## Natural voice (ElevenLabs)
+1. Sign up at elevenlabs.io, then go to **Developers → API keys → Create key**. Tick **Text to Speech** access.
+2. Add it to `.env` as `ELEVENLABS_API_KEY=...`, then restart with `npm start`.
+3. In Penny's settings, choose **Female** or **Male** and pick a voice (Lily, Alice, Daniel, George…).
+
+Audio streams as it's generated, so Penny starts talking almost immediately, in every language. If the key doesn't work, she switches to the browser voice and shows a notice.
+
 ## A 2-minute demo script
 
 1. Tap **Penny** and the green call button. Ask: *"Can I afford a £200 trip?"*

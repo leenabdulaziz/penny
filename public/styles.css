@@ -427,3 +427,23 @@ button { font-family: inherit; cursor: pointer; }
 .stage-info { max-height: 100vh; overflow-y: auto; scrollbar-width: none; }
 
 #screen.cap-on .sheet { max-height: calc(100% - 206px); }
+
+/* ---------- line icons ---------- */
+.ic { display: inline-block; vertical-align: middle; flex: none; }
+.w-ic { width: 40px; height: 40px; margin: 2px auto 6px; border-radius: 12px; background: var(--lav-2); color: var(--purple); display: grid; place-items: center; }
+.tx-ic { color: var(--purple); }
+.sc-ic { color: var(--purple); }
+.chip-ic { display: inline-flex; margin-right: 4px; color: var(--magenta); vertical-align: -2px; }
+.h-ic { display: inline-flex; align-items: center; gap: 6px; } .h-ic .ic { color: var(--purple); }
+.ib-ic { display: inline-flex; margin-right: 5px; vertical-align: -2px; opacity: .9; }
+.wn-row { display: flex; gap: 6px; align-items: flex-start; } .wn-row + .wn-row { margin-top: 4px; } .wn-row .ic { margin-top: 1px; }
+.toast-icon .ic, .cta-ic .ic { color: #fff; }
+.lc-emoji { width: 40px; height: 40px; border-radius: 12px; background: var(--lav-2); color: var(--purple); display: grid; place-items: center; font-size: 0; }
+.lc-emoji.big { width: 52px; height: 52px; border-radius: 15px; }
+.qd-emoji { width: 72px; height: 72px; margin: 0 auto 8px; border-radius: 50%; background: #f2e8fb; color: var(--purple); display: grid; place-items: center; font-size: 0; }
+.xp-ring span { color: #fff; }
+.set-sec h4 { display: flex; align-items: center; gap: 7px; } .set-sec h4 .ic { color: var(--purple); }
+.set-sec summary h4 { display: inline-flex; }
+.src-link .ic, .btn .ic, .email-note .ic { vertical-align: -3px; margin-right: 3px; }
+.email-note .ic { color: var(--purple); }
+.p-av { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #8a5cb5, #3c1053); color: #fff; font-size: 13px !important; font-weight: 700; display: grid; place-items: center; flex: none; }

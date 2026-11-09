@@ -44,7 +44,7 @@
         </div>
 
         <!-- Toast -->
-        <div class="toast" id="toast"><div class="toast-icon">✓</div><div><b id="toastTitle"></b><span id="toastBody"></span></div></div>
+        <div class="toast" id="toast"><div class="toast-icon"></div><div><b id="toastTitle"></b><span id="toastBody"></span></div></div>
 
         <!-- App views -->
         <main class="app" id="app">
@@ -85,8 +85,8 @@
             <label class="buffer-row">Minimum buffer
               <span class="stepper"><button data-step="-25">−</button><b id="bufVal">£100</b><button data-step="25">+</button></span>
             </label>
-            <button class="btn ghost small" id="btnHuman" type="button" onclick="App.showHumanHandoff('Our team is here to help')">🤝 Talk to a person</button>
-            <button class="btn primary small" id="btnAllSettings" type="button">⚙️ Language, voice & personality…</button>
+            <button class="btn ghost small" id="btnHuman" type="button" onclick="App.showHumanHandoff('Our team is here to help')">Talk to a person</button>
+            <button class="btn primary small" id="btnAllSettings" type="button">Language, voice &amp; personality…</button>
           </div>
 
           <div class="pp-orb-wrap" id="orbWrap" title="Tap to interrupt">
@@ -124,7 +124,7 @@
             </button>
           </div>
           <form class="pp-input" id="typeForm" autocomplete="off">
-            <button type="button" class="attach" id="btnAttach" aria-label="Upload a bill" title="Upload a photo or PDF of a bill">📎</button>
+            <button type="button" class="attach" id="btnAttach" aria-label="Upload a bill" title="Upload a photo or PDF of a bill"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>
             <input type="file" id="fileInput" accept="image/*,application/pdf" hidden />
             <input id="typeInput" placeholder="Type a question for Penny…" />
             <button type="submit" aria-label="Send">↑</button>
@@ -150,6 +150,7 @@
   </div>
 
   <script src="data.js"></script>
+  <script src="icons.js"></script>
   <script src="profile.js"></script>
   <script src="app.js"></script>
   <script src="learn.js"></script>

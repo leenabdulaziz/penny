@@ -6,7 +6,7 @@
 
   const TOPICS = [
     {
-      id: 'safety-net', emoji: '🛟', title: 'Build a safety net', level: 'Saving',
+      id: 'safety-net', emoji: 'lifebuoy', title: 'Build a safety net', level: 'Saving',
       source: { title: 'How much of a safety net should I have?', url: 'https://www.natwest.com/money-blog/saving-and-budgeting/how-much-of-a-safety-net-should-i-have.html' },
       points: [
         'An emergency fund covers surprises like a broken boiler or losing income, so you don\'t have to borrow.',
@@ -22,7 +22,7 @@
       ],
     },
     {
-      id: 'compound', emoji: '🌱', title: 'Compound interest', level: 'Saving',
+      id: 'compound', emoji: 'sprout', title: 'Compound interest', level: 'Saving',
       source: { title: 'What is compound interest?', url: 'https://www.natwest.com/savings/savings-guides/what-is-compound-interest.html' },
       points: [
         'Compound interest is interest paid on your original savings plus the interest you\'ve already earned.',
@@ -37,7 +37,7 @@
       ],
     },
     {
-      id: 'save-or-invest', emoji: '⚖️', title: 'Save or invest?', level: 'Investing',
+      id: 'save-or-invest', emoji: 'scale', title: 'Save or invest?', level: 'Investing',
       source: { title: 'Should I save or invest?', url: 'https://www.natwest.com/investments/our-insights/savings-vs-investment.html' },
       points: [
         'Saving keeps cash safe and easy to reach — best for emergencies and goals in the next few years.',
@@ -52,7 +52,7 @@
       ],
     },
     {
-      id: 'isa', emoji: '🧾', title: 'ISAs explained', level: 'Saving',
+      id: 'isa', emoji: 'piggy', title: 'ISAs explained', level: 'Saving',
       source: { title: 'Cash ISA', url: 'https://www.natwest.com/savings/isa-overview/cash-isa.html' },
       points: [
         'An ISA is a tax-free wrapper: interest or investment growth inside it isn\'t taxed.',
@@ -67,7 +67,7 @@
       ],
     },
     {
-      id: 'investing', emoji: '📊', title: 'Investing basics', level: 'Investing',
+      id: 'investing', emoji: 'chart', title: 'Investing basics', level: 'Investing',
       source: { title: 'Stocks and Shares ISA', url: 'https://www.natwest.com/investments/stocks-and-shares-isa.html' },
       points: [
         'Investing means buying things like company shares or funds, aiming to grow your money over time.',
@@ -82,7 +82,7 @@
       ],
     },
     {
-      id: 'credit', emoji: '💳', title: 'Your credit score', level: 'Borrowing',
+      id: 'credit', emoji: 'card', title: 'Your credit score', level: 'Borrowing',
       source: { title: 'Protect your credit score', url: 'https://www.natwest.com/fraud-and-security/protect-your-credit-score.html' },
       points: [
         'Paying bills and credit on time is one of the biggest things you can do for your score.',
@@ -97,7 +97,7 @@
       ],
     },
     {
-      id: 'scams', emoji: '🛡️', title: 'Spot a scam', level: 'Safety',
+      id: 'scams', emoji: 'shield', title: 'Spot a scam', level: 'Safety',
       source: { title: 'NatWest Security Centre', url: 'https://www.natwest.com/fraud-and-security.html' },
       points: [
         'Only criminals ask you to move your money to a "safe account". Your bank will never do this.',
@@ -112,7 +112,7 @@
       ],
     },
     {
-      id: 'budget', emoji: '🗂️', title: 'Budget like a pro', level: 'Budgeting',
+      id: 'budget', emoji: 'wallet', title: 'Budget like a pro', level: 'Budgeting',
       source: { title: 'Understanding your overdraft', url: 'https://www.natwest.com/life-moments/Struggling-financially/overdraft-debt.html' },
       points: [
         'Start with your take-home pay — what actually lands after tax and other deductions.',
@@ -136,18 +136,18 @@
   const find = (id) => TOPICS.find((t) => t.id === id) || TOPICS.find((t) => t.title.toLowerCase().includes(String(id).toLowerCase())) || TOPICS[0];
 
   function hubHTML() {
-    return `<div class="learn-hero"><div><b>Money skills</b><small>${doneCount()}/${TOPICS.length} topics · ${xp()} XP</small></div><div class="xp-ring" style="--p:${(doneCount() / TOPICS.length) * 100}%"><span>🎓</span></div></div>
-      <div class="learn-grid">${TOPICS.map((t) => `<button class="learn-card" data-topic="${t.id}"><span class="lc-emoji">${t.emoji}</span><b>${esc(t.title)}</b><small>${t.level}${progress[t.id]?.best ? ` · ⭐ ${progress[t.id].best}/${t.quiz.length}` : ''}</small></button>`).join('')}</div>
+    return `<div class="learn-hero"><div><b>Money skills</b><small>${doneCount()}/${TOPICS.length} topics · ${xp()} XP</small></div><div class="xp-ring" style="--p:${(doneCount() / TOPICS.length) * 100}%"><span>${Ic('graduation', 22)}</span></div></div>
+      <div class="learn-grid">${TOPICS.map((t) => `<button class="learn-card" data-topic="${t.id}"><span class="lc-emoji">${Ic(t.emoji, 22)}</span><b>${esc(t.title)}</b><small>${t.level}${progress[t.id]?.best ? ` · ${progress[t.id].best}/${t.quiz.length} correct` : ''}</small></button>`).join('')}</div>
       <p class="learn-src">Lessons are based on NatWest money guides. Tap a guide link inside each lesson to read the original.</p>`;
   }
   function bindHub(root) { root.querySelectorAll('[data-topic]').forEach((b) => (b.onclick = () => openLesson(b.dataset.topic))); }
 
   function openLesson(id) {
     const t = find(id);
-    const s = App.openSheet(`<div class="lesson-head"><span class="lc-emoji big">${t.emoji}</span><div><h3>${esc(t.title)}</h3><div class="sub">${t.level} · 2 min read</div></div></div>
+    const s = App.openSheet(`<div class="lesson-head"><span class="lc-emoji big">${Ic(t.emoji, 26)}</span><div><h3>${esc(t.title)}</h3><div class="sub">${t.level} · 2 min read</div></div></div>
       <div class="sum-card"><ul class="lesson-points">${t.points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
-      <a class="src-link" href="${t.source.url}" target="_blank" rel="noopener">📖 Based on NatWest: ${esc(t.source.title)} ↗</a></div>
-      <div class="btn-row"><button class="btn ghost" id="lsAsk">🎙️ Ask Penny</button><button class="btn primary" id="lsQuiz">Take the quiz</button></div>`);
+      <a class="src-link" href="${t.source.url}" target="_blank" rel="noopener">${Ic('book', 14)} Based on NatWest: ${esc(t.source.title)} ↗</a></div>
+      <div class="btn-row"><button class="btn ghost" id="lsAsk">${Ic('mic', 16)} Ask Penny</button><button class="btn primary" id="lsQuiz">Take the quiz</button></div>`);
     s.querySelector('#lsQuiz').onclick = () => openQuiz(t.id);
     s.querySelector('#lsAsk').onclick = () => { App.closeSheet(); window.Penny && window.Penny.openAndAsk(`Can you quiz me on ${t.title.toLowerCase()} out loud?`); };
   }
@@ -160,9 +160,9 @@
         const prev = progress[t.id]?.best || 0;
         progress[t.id] = { best: Math.max(prev, score), at: Date.now() }; saveProgress();
         const perfect = score === t.quiz.length;
-        const s = App.openSheet(`<div class="quiz-done"><div class="qd-emoji">${perfect ? '🏆' : score ? '⭐' : '💪'}</div><h3>${score}/${t.quiz.length} correct</h3>
+        const s = App.openSheet(`<div class="quiz-done"><div class="qd-emoji">${Ic(perfect ? 'trophy' : score ? 'star' : 'target', 34)}</div><h3>${score}/${t.quiz.length} correct</h3>
           <div class="sub">${perfect ? 'Perfect! You\'ve mastered this one.' : score ? 'Nice work — try again to get them all.' : 'Good start — have another go.'} +${score * 10} XP</div>
-          <a class="src-link" href="${t.source.url}" target="_blank" rel="noopener">📖 Read the full NatWest guide ↗</a></div>
+          <a class="src-link" href="${t.source.url}" target="_blank" rel="noopener">${Ic('book', 14)} Read the full NatWest guide ↗</a></div>
           <div class="btn-row"><button class="btn ghost" id="qAgain">Try again</button><button class="btn primary" id="qMore">More topics</button></div>`);
         s.querySelector('#qAgain').onclick = () => openQuiz(t.id);
         s.querySelector('#qMore').onclick = () => { App.closeSheet(); App.show('help'); };
@@ -170,7 +170,7 @@
         return;
       }
       const q = t.quiz[i];
-      const s = App.openSheet(`<div class="quiz-top"><span>${t.emoji} ${esc(t.title)}</span><span>${i + 1}/${t.quiz.length}</span></div>
+      const s = App.openSheet(`<div class="quiz-top"><span>${esc(t.title)}</span><span>${i + 1}/${t.quiz.length}</span></div>
         <div class="quiz-bar"><span style="width:${(i / t.quiz.length) * 100}%"></span></div>
         <h3 class="quiz-q">${esc(q.q)}</h3>
         <div class="quiz-opts">${q.options.map((o, k) => `<button class="quiz-opt" data-k="${k}">${esc(o)}</button>`).join('')}</div>
@@ -182,7 +182,7 @@
         s.querySelectorAll('.quiz-opt').forEach((x) => { const kk = +x.dataset.k; if (kk === q.a) x.classList.add('right'); else if (kk === k) x.classList.add('wrong'); x.disabled = true; });
         const fb = s.querySelector('#qFb');
         fb.className = 'quiz-fb ' + (ok ? 'ok' : 'no');
-        fb.innerHTML = `<b>${ok ? 'Correct! 🎉' : 'Not quite.'}</b> ${esc(q.why)}<button class="btn primary" id="qNext" style="width:100%;margin-top:10px">${i + 1 < t.quiz.length ? 'Next question' : 'See results'}</button>`;
+        fb.innerHTML = `<b>${ok ? 'Correct!' : 'Not quite.'}</b> ${esc(q.why)}<button class="btn primary" id="qNext" style="width:100%;margin-top:10px">${i + 1 < t.quiz.length ? 'Next question' : 'See results'}</button>`;
         fb.querySelector('#qNext').onclick = () => { i++; render(); };
       }));
     };

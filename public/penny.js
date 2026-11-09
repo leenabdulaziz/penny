@@ -380,7 +380,7 @@
     let wordBase = 0, gotBoundary = false, fallbackT;
     const v = pickVoice();
     const sp = PS().speech();
-    if (!v && warnedNoVoice !== sp.lang) { warnedNoVoice = sp.lang; App.toast(`No ${PS().lang().name} voice installed`, 'Add one in System Settings → Accessibility → Spoken Content', '🔈', '#c77700'); }
+    if (!v && warnedNoVoice !== sp.lang) { warnedNoVoice = sp.lang; App.toast(`No ${PS().lang().name} voice installed`, 'Add one in System Settings → Accessibility → Spoken Content', 'volume', '#c77700'); }
     const playChunk = (i) => {
       if (!speakResolve) return;
       if (i >= chunks.length) { highlightWords(words.length); return done(); }
@@ -406,14 +406,12 @@
     playChunk(0);
   }
   async function speakEleven(text, nWords) {
-    const r = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, voice_id: PS().elevenVoice(), language: PS().lang().code }) });
-    if (!r.ok) throw new Error('tts');
-    const blob = await r.blob();
-    if (!speakResolve) return;
+    // Streamed from the server, so playback starts before the whole clip is generated.
     audioEl = audioEl || new Audio();
-    audioEl.src = URL.createObjectURL(blob);
+    audioEl.src = `/api/tts?${new URLSearchParams({ text, voice: PS().elevenVoice(), lang: PS().lang().code })}`;
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       if (!audioAnalyser) {
         const src = audioCtx.createMediaElementSource(audioEl);
         audioAnalyser = audioCtx.createAnalyser(); audioAnalyser.fftSize = 512;
@@ -422,9 +420,16 @@
       const buf = new Uint8Array(audioAnalyser.fftSize);
       S.ttsLevelFn = () => { audioAnalyser.getByteTimeDomainData(buf); let s = 0; for (const v of buf) { const d = (v - 128) / 128; s += d * d; } return Math.min(1, Math.sqrt(s / buf.length) * 4); };
     } catch (e) { /* level animation falls back to simulated */ }
-    audioEl.ontimeupdate = () => { if (audioEl.duration) highlightWords(Math.ceil((audioEl.currentTime / audioEl.duration) * nWords)); };
+    const est = Math.max(1.2, nWords / 2.6); // streamed audio has no duration up front; estimate for the word highlight
+    audioEl.ontimeupdate = () => { const d = isFinite(audioEl.duration) ? audioEl.duration : est; highlightWords(Math.ceil((audioEl.currentTime / d) * nWords)); };
     audioEl.onended = () => { highlightWords(nWords); done(); };
-    await audioEl.play();
+    audioEl.onerror = null;
+    try {
+      await audioEl.play();
+    } catch (e) {
+      if (S.tts === 'elevenlabs') { S.tts = 'browser'; PS().state.ttsMode = 'browser'; App.toast('Natural voice unavailable', 'Using the built-in voice instead — check your ElevenLabs key', 'volume', '#c77700'); }
+      throw e;
+    }
   }
   function stopSpeaking() {
     if (window.speechSynthesis) speechSynthesis.cancel();
@@ -463,9 +468,9 @@
   }
 
   const TOOL_LABEL = {
-    run_forecast: '📈 Updated your forecast preview', clear_forecast_scenario: '↺ Cleared the what-if', get_transactions: '🔎 Checked transactions',
-    plan_savings_goal: '🎯 Built a savings plan', set_minimum_buffer: '🛟 Updated your buffer', draft_email: '✉️ Drafted an email for review',
-    send_email: '📤 Sent the email', show_spending_breakdown: '📊 Showed your spending', talk_to_a_person: '🤝 Offered a colleague', add_reminders: '✅ Added reminders', show_screen: '📱 Opened a screen', set_language: '🌍 Switched language', show_bill_breakdown: '🧾 Explained your bill', check_benefits: '💷 Checked your benefits', start_quiz: '🎓 Opened a quiz', get_lesson: '📖 Pulled up a lesson', open_penny_settings: '⚙️ Opened settings',
+    run_forecast: 'Updated your forecast preview', clear_forecast_scenario: 'Cleared the what-if', get_transactions: 'Checked transactions',
+    plan_savings_goal: 'Built a savings plan', set_minimum_buffer: 'Updated your buffer', draft_email: 'Drafted an email for review',
+    send_email: 'Sent the email', show_spending_breakdown: 'Showed your spending', talk_to_a_person: 'Offered a colleague', add_reminders: 'Added reminders', show_screen: 'Opened a screen', set_language: 'Switched language', show_bill_breakdown: 'Explained your bill', check_benefits: 'Checked your benefits', start_quiz: 'Opened a quiz', get_lesson: 'Pulled up a lesson', open_penny_settings: 'Opened settings',
   };
 
   function runTool(name, input) {
@@ -498,7 +503,7 @@
       case 'add_reminders': {
         const n = App.addReminders(input.items);
         if (App.state.tab !== 'home') App.show('home');
-        App.toast('Added to Reminders', `${n} new reminder${n === 1 ? '' : 's'} from Penny`, '✅', '#5a287d');
+        App.toast('Added to Reminders', `${n} new reminder${n === 1 ? '' : 's'} from Penny`, 'check-square', '#5a287d');
         return { added: n };
       }
       case 'show_spending_breakdown': { const d = B.spendingBreakdown(); App.showSpending(d); return { ...d, shownOnScreen: true }; }
@@ -551,7 +556,7 @@
     setMode('thinking');
     thinkingLine(opts.attachment ? 'Reading your bill…' : 'Checking your accounts…');
     if (opts.attachment) {
-      addHistory('tool', `📎 ${opts.attachment.name}`);
+      addHistory('tool', `Attached ${opts.attachment.name}`);
       if (opts.attachment.thumb) $('#subUser').insertAdjacentHTML('afterbegin', `<img class="up-thumb" src="${opts.attachment.thumb}" alt="Uploaded bill"><br>`);
     }
     S.chain = S.chain.then(() => converse(text, gen, opts.attachment)).catch((e) => console.error(e));
@@ -607,7 +612,7 @@
         await new Promise((r) => setTimeout(r, 400));
         return converse(text, gen, attachment, true);
       }
-      addHistory('tool', `⚠️ ${String(e.message || e).slice(0, 220)}`);
+      addHistory('tool', `Problem: ${String(e.message || e).slice(0, 220)}`);
       reply = authProblem ? e.message : "Sorry, I lost connection for a second. Could you say that again?";
     }
     reply = reply || "Done — it's on your screen.";

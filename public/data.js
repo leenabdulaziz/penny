@@ -362,7 +362,7 @@
       const pct = Math.round((wk.thisWeekDiscretionary / wk.typicalWeekDiscretionary - 1) * 100);
       if (pct >= 20) {
         const top = wk.categoryChanges.filter(nonBill).filter((c) => !['Groceries', 'Transport'].includes(c.category)).filter((c) => c.change > 0).slice(0, 2).map((c) => c.category.toLowerCase());
-        out.push({ id: 'week', severity: Math.min(1, pct / 80), icon: '📈',
+        out.push({ id: 'week', severity: Math.min(1, pct / 80), icon: 'trending',
           title: `you've spent ${gbp0(wk.thisWeekDiscretionary)} on extras this week`,
           detail: `That's ${pct}% more than your usual week (${gbp0(wk.typicalWeekDiscretionary)})${top.length ? `, mostly ${top.join(' and ')}` : ''}.`,
           ask: `Why did I spend more than usual this week?` });
@@ -375,17 +375,17 @@
       .map(([c, v]) => ({ c, v, exp: (avg[c] || 0) * frac })).filter((x) => x.exp >= 25 && x.v > x.exp * 1.3).sort((a, b) => b.v / b.exp - a.v / a.exp);
     if (over[0]) {
       const x = over[0], pct = Math.round((x.v / x.exp - 1) * 100);
-      out.push({ id: 'cat', severity: Math.min(0.95, pct / 120), icon: '🍽️',
+      out.push({ id: 'cat', severity: Math.min(0.95, pct / 120), icon: 'utensils',
         title: pct >= 100 ? `you've spent ${(x.v / x.exp).toFixed(1)}× your usual on ${x.c.toLowerCase()} this pay cycle` : `${x.c.toLowerCase()} is running ${pct}% above your normal`,
         detail: `${gbp0(x.v)} so far this pay cycle vs about ${gbp0(x.exp)} by now usually.`,
         ask: `Am I overspending on ${x.c.toLowerCase()}? How could I cut back?` });
     }
     const f = forecast();
-    if (f.headroomAboveBuffer < 300) out.push({ id: 'headroom', severity: f.headroomAboveBuffer < 150 ? 0.85 : 0.55, icon: '🛟',
+    if (f.headroomAboveBuffer < 300) out.push({ id: 'headroom', severity: f.headroomAboveBuffer < 150 ? 0.85 : 0.55, icon: 'lifebuoy',
       title: `only about ${gbp0(f.headroomAboveBuffer)} is free until payday`,
       detail: `After bills, essentials and your ${gbp0(f.buffer)} buffer. Payday is ${fmtDate(new Date(f.assumedPayday))}.`,
       ask: 'How much can I safely spend before payday?' });
-    out.push({ id: 'energy', severity: 0.5, icon: '⚡', title: 'your energy bill has gone up 41% since the summer',
+    out.push({ id: 'energy', severity: 0.5, icon: 'zap', title: 'your energy bill has gone up 41% since the summer',
       detail: 'Bright Energy: £68 → £79.50 → £96 a month.', ask: 'My energy bill went up a lot. What can I do about it?' });
     return out.sort((a, b) => b.severity - a.severity);
   }

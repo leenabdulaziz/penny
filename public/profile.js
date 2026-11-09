@@ -5,28 +5,28 @@
 
   const PRESETS = {
     alex: {
-      label: 'Leen, 27', emoji: '🧑‍💻', name: 'Leen', age: 27, gender: 'prefer not to say', livesWith: 'alone', relationship: 'single',
+      label: 'Leen, 27', name: 'Leen', age: 27, gender: 'prefer not to say', livesWith: 'alone', relationship: 'single',
       children: 0, childAges: [], employment: 'employed', income: 31000, partnerIncome: 0, householdIncome: 31000, savings: 400,
       housing: 'rent', rent: 750, region: 'England', disability: false, needsCare: false, carerHours: 0, pregnant: false,
       inEducation: false, firstHome: true, uniform: false,
       about: 'Works in design, rents a flat on her own, would like to buy a first home one day.',
     },
     margaret: {
-      label: 'Margaret, 74', emoji: '👵', name: 'Margaret', age: 74, gender: 'woman', livesWith: 'alone', relationship: 'widowed',
+      label: 'Margaret, 74', name: 'Margaret', age: 74, gender: 'woman', livesWith: 'alone', relationship: 'widowed',
       children: 0, childAges: [], employment: 'retired', income: 11300, partnerIncome: 0, householdIncome: 11300, savings: 6200,
       housing: 'own', rent: 0, region: 'England', disability: true, needsCare: true, carerHours: 0, pregnant: false,
       inEducation: false, firstHome: false, uniform: false,
       about: 'Retired school cook, widowed, lives alone. Arthritis in her hands makes dressing and cooking hard. Not very confident with apps.',
     },
     jayden: {
-      label: 'Jayden, 17', emoji: '🧢', name: 'Jayden', age: 17, gender: 'man', livesWith: 'parents', relationship: 'single',
+      label: 'Jayden, 17', name: 'Jayden', age: 17, gender: 'man', livesWith: 'parents', relationship: 'single',
       children: 0, childAges: [], employment: 'student', income: 4200, partnerIncome: 0, householdIncome: 24000, savings: 350,
       housing: 'family', rent: 0, region: 'England', disability: false, needsCare: false, carerHours: 0, pregnant: false,
       inEducation: true, firstHome: false, uniform: true,
       about: 'Sixth-form student with a weekend job at a cinema. Into gaming and football. Lives with parents.',
     },
     amira: {
-      label: 'Amira, 34', emoji: '👩‍👧‍👦', name: 'Amira', age: 34, gender: 'woman', livesWith: 'family', relationship: 'single',
+      label: 'Amira, 34', name: 'Amira', age: 34, gender: 'woman', livesWith: 'family', relationship: 'single',
       children: 2, childAges: [3, 7], employment: 'part-time', income: 16500, partnerIncome: 0, householdIncome: 16500, savings: 900,
       housing: 'rent', rent: 950, region: 'England', disability: false, needsCare: false, carerHours: 0, pregnant: false,
       inEducation: false, firstHome: false, uniform: true,
@@ -73,7 +73,7 @@
   function speechRateFactor() { return { teen: 1.06, 'young-adult': 1.02, adult: 1, older: 0.88 }[ageGroup()]; }
 
   function forAI() {
-    const { presetId, label, emoji, ...p } = profile;
+    const { presetId, label, ...p } = profile;
     return { ...p, ageGroup: ageGroup(), audienceGuidance: audienceGuidance() };
   }
 

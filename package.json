@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Penny \u2014 voice AI money assistant inside a banking app",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "share": "node share.js"
   },
   "keywords": [],
   "author": "",

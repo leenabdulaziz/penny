@@ -45,7 +45,13 @@ Claude also gets a live JSON snapshot of the account. It includes balances, bill
 - **Money skills**: 8 lessons with quizzes based on NatWest guides, with XP. Penny can also quiz you out loud.
 - **Personal banner**: shows rotating "Penny noticed" spending alerts worked out from your data.
 
-## Put Penny online (a private link you can send)
+## Share Penny with a friend (one command)
+```bash
+npm run share
+```
+It prints a private link like `https://something.trycloudflare.com/?key=…`. Send that link: anyone without the key sees "This link is private". It works while your Mac is on and the window stays open, and the link changes each time.
+
+## Put Penny online permanently (optional)
 1. Go to render.com and sign up with GitHub.
 2. Click **New → Blueprint** and choose this repository. Render reads `render.yaml`.
 3. Paste your `ANTHROPIC_API_KEY` (and `ELEVENLABS_API_KEY` if you have one) when it asks, then click **Apply**.

@@ -546,3 +546,18 @@ button { font-family: inherit; cursor: pointer; }
 .pp-controls { padding-top: 18px; }
 .pp-note { margin-top: 10px; }
 .chips { flex-wrap: wrap; justify-content: center; overflow: visible; -webkit-mask-image: none; mask-image: none; padding: 0 0 4px; }
+
+/* ---------- lighter captions + smaller status pill ---------- */
+.subtitles { max-height: 104px; min-height: 52px; padding: 0 14px; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 100%); mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 100%); }
+.sub-user { font-size: 12.5px; margin: 0 0 6px; }
+.sub-penny { font-size: 15px; font-weight: 400; line-height: 1.5; letter-spacing: 0; }
+.sub-penny .w { opacity: .4; } .sub-penny .w.on { opacity: 1; }
+.penny-panel.big .sub-penny { font-size: 18px; }
+.penny-panel.big .subtitles { max-height: 124px; }
+.working { gap: 6px; padding: 4px 11px; font-size: 11.5px; font-weight: 500; }
+.wk-dots { gap: 3px; } .wk-dots i { width: 4.5px; height: 4.5px; }
+.lc-text { font-size: 13.5px; max-height: 58px; }
+
+.chips { gap: 6px; }
+.chips button { font-size: 12px; padding: 6px 11px; }
+.working { padding: 3px 10px; font-size: 11px; }

@@ -153,7 +153,7 @@
     hint.textContent = m === 'speaking' ? 'Tap to interrupt' : paused ? 'Paused · tap to resume' : S.call && m === 'listening' ? 'Tap to pause' : '';
     hint.classList.toggle('show', !!hint.textContent);
     clearTimeout(S.hintT); // "Tap to pause" is a gentle reminder, not a permanent label
-    if (S.call && m === 'listening' && !paused) S.hintT = setTimeout(() => hint.classList.remove('show'), 3500);
+    if (S.call && (m === 'listening' || m === 'speaking') && !paused) S.hintT = setTimeout(() => hint.classList.remove('show'), 3000);
     $('#pennyPanel').classList.toggle('busy', m === 'thinking' || m === 'speaking');
     $('#pennyPanel').classList.toggle('paused', paused);
     syncCaption();
@@ -200,22 +200,26 @@
     $('#histCount').textContent = n ? String(n) : '';
   }
   const FOLLOW_UPS = {
-    run_forecast: ['Make me a plan to afford it', 'What if I wait until payday?', 'Clear the what-if'],
-    plan_savings_goal: ['Add this to my reminders', 'Can I do it faster?'],
-    draft_email: ['Send it', 'Make it a bit firmer', 'Not now'],
-    show_bill_breakdown: ['Remind me to pay it', 'Can I get a discount on this?'],
-    prepare_transfer: ['What will I have left?', 'Move £50 to my Saver'],
-    check_benefits: ['How do I claim the first one?', 'Remind me to apply'],
-    get_lesson: ['Quiz me on another topic'], start_quiz: ['Explain it more simply'],
+    run_forecast: ['Make a plan', 'Wait till payday?'],
+    plan_savings_goal: ['Add to reminders', 'Can I do it faster?'],
+    draft_email: ['Send it', 'Make it firmer'],
+    show_bill_breakdown: ['Remind me to pay', 'Any discounts?'],
+    prepare_transfer: ["What's left after?", 'Move £50 to Saver'],
+    check_benefits: ['How do I claim?', 'Remind me to apply'],
+    get_lesson: ['Another topic'], start_quiz: ['Explain it simply'],
   };
+  const STARTERS = [['How am I doing?', 'How am I doing this month?'], ['Afford a £200 trip?', 'Can I afford a £200 trip?'], ['Help with a bill', 'Can you help me understand a bill?']];
+  const FULL = { 'Make a plan': 'Make me a plan to afford it', 'Wait till payday?': 'What if I wait until payday?', 'Add to reminders': 'Add this plan to my reminders',
+    'Make it firmer': 'Make the email a bit firmer', 'Remind me to pay': 'Remind me to pay this bill', 'Any discounts?': 'Can I get a discount on this bill?',
+    "What's left after?": 'What will I have left after that?', 'How do I claim?': 'How do I claim the first one?', 'Another topic': 'Quiz me on another topic', 'Explain it simply': 'Explain it more simply' };
   // Suggestions: a few starters before the first question, then at most two relevant follow-ups (or none).
   function renderChips(list) {
     const asked = S.turns.some((t) => t.role === 'user');
-    const items = list && list.length ? list.slice(0, 2) : asked ? [] : SUGGESTIONS.slice(0, 3);
+    const items = list && list.length ? list.slice(0, 2).map((x) => [x, FULL[x] || x]) : asked ? [] : STARTERS;
     $('#pennyPanel').classList.toggle('no-chips', !items.length);
-    $('#chips').innerHTML = items.map((q) => `<button>${esc(q)}</button>`).join('');
+    $('#chips').innerHTML = items.map(([label, q]) => `<button data-q="${esc(q)}">${esc(label)}</button>`).join('');
     $('#chips').scrollLeft = 0;
-    $('#chips').querySelectorAll('button').forEach((b) => (b.onclick = () => ask(b.textContent)));
+    $('#chips').querySelectorAll('button').forEach((b) => (b.onclick = () => ask(b.dataset.q)));
   }
   renderChips();
 

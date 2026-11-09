@@ -184,6 +184,19 @@
     $('#ppState').textContent = label || 'Thinking…';
     syncCaption();
   }
+  // An honest first label based on what was asked; replaced by the exact action once Penny runs one.
+  function guessWork(t) {
+    t = String(t || '').toLowerCase();
+    if (/\b(send|pay|transfer|move)\b.*(£|\d|to )/.test(t)) return 'Setting up the transfer…';
+    if (/plan|save for|saving for|goal/.test(t)) return 'Building your plan…';
+    if (/afford|what if|late|salary|forecast|payday|left (until|before)/.test(t)) return 'Running the numbers…';
+    if (/bill|council tax|letter|invoice/.test(t)) return 'Looking at your bills…';
+    if (/benefit|entitled|claim|support/.test(t)) return 'Checking what you could claim…';
+    if (/email|write to|contact them/.test(t)) return 'Writing your email…';
+    if (/quiz|learn|teach|explain .*(isa|invest|interest|credit)|invest/.test(t)) return 'Getting a lesson ready…';
+    if (/balance|spend|spent|spending|money|account|transaction|subscription|stress|doing|budget|week|month|income|paid/.test(t)) return 'Checking your accounts…';
+    return 'Thinking…';
+  }
   const WORKING = {
     run_forecast: 'Running the numbers…', plan_savings_goal: 'Building your plan…', get_transactions: 'Looking through your transactions…',
     draft_email: 'Writing your email…', send_email: 'Sending…', show_bill_breakdown: 'Reading your bill…', check_benefits: 'Checking what you could claim…',
@@ -596,7 +609,7 @@
     setUserLine(text);
     addHistory('user', text);
     setMode('thinking');
-    thinkingLine(opts.attachment ? 'Reading your bill…' : '');
+    thinkingLine(opts.attachment ? 'Reading your bill…' : guessWork(text));
     if (opts.attachment) {
       addHistory('tool', `Attached ${opts.attachment.name}`);
       if (opts.attachment.thumb) $('#subUser').insertAdjacentHTML('afterbegin', `<img class="up-thumb" src="${opts.attachment.thumb}" alt="Uploaded bill"><br>`);
